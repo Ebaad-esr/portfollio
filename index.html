@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root" class="dark bg-black text-white">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academics & Photography // Portfolios</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        accent: '#FF9800',
+                        accentHover: '#F57C00',
+                        bgBlack: '#000000',
+                        cardBlack: '#0a0a0a',
+                        borderGray: '#333333'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Force zero rounded corners everywhere for strict brutalist aesthetic */
+        *, ::before, ::after {
+            border-radius: 0px !important;
+        }
+        body {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        /* Dark / Light Mode custom overrides */
+        html.dark body {
+            background-color: #000000b3;
+            color: #ffffff;
+        }
+        html.light body {
+            background-color: #f4f4f4;
+            color: #111111;
+        }
+        html.light .bg-black {
+            background-color: #ffffff !important;
+        }
+        html.light .bg-cardBlack {
+            background-color: #f0f0f0 !important;
+        }
+        html.light .border-borderGray {
+            border-color: #cccccc !important;
+        }
+        html.light .text-gray-400 {
+            color: #000000 !important;
+        }
+        html.light .text-gray-300 {
+            color: #000000 !important;
+        }
+        html.light .text-gray-500 {
+            color: #000000 !important;
+        }
+        /* Custom Brutalist Reactive Cursor Highlight */
+        #brutalist-cursor {
+            pointer-events: none;
+            position: fixed;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.15s ease, height 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+        }
+        /* Dynamic Scroll Transform for Hero Background Image */
+        #hero-bg-img {
+            will-change: transform, filter, opacity;
+            transition: transform 0.001s ease-out, filter 0.01s ease-out;
+        }
+        /* Reveal on scroll animation trigger class */
+        .reveal-on-scroll {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-on-scroll.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Interactive Card Tilt & Glitch Effect */
+        .reactive-card {
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease;
+            will-change: transform;
+        }
+        .reactive-card:hover {
+            box-shadow: 6px 6px 0px 0px #FF9800;
+        }
+        /* CRT Scanline Overlay Styling */
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 0, 0, 0.3) 50%,
+                rgba(0, 0, 0, 0.3)
+            );
+            background-size: 100% 4px;
+        }
+        /* 35mm Film Grain Simulation Overlay */
+        .film-grain {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+        }
+        @keyframes pulse-accent {
+            0%, 100% { border-color: #FF9800; }
+            50% { border-color: #ffffff; }
+        }
+        .pulse-border {
+            animation: pulse-accent 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col selection:bg-accent selection:text-black relative">
+
+    <!-- INTERACTIVE CUSTOM BRUTALIST CURSOR -->
+    <div id="brutalist-cursor" class="w-5 h-5 border-2 border-accent bg-accent/10 hidden md:block"></div>
+
+    <!-- CANVAS INTERACTIVE BACKGROUND LAYER -->
+    <canvas id="interactive-grid-canvas" class="fixed inset-0 pointer-events-none z-0 opacity-50"></canvas>
+    <div id="bg-overlay-effects" class="fixed inset-0 pointer-events-none z-0"></div>
+
+    <!-- GLOBAL LOADER COMPONENT -->
+    <div id="page-loader" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center border-4 border-accent transition-opacity duration-500 pointer-events-none opacity-0">
+        <div class="flex items-center space-x-3 mb-4">
+            <!-- SVG Icon Component -->
+            <svg class="animate-spin h-8 w-8 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-accent font-bold tracking-widest text-lg font-mono">// INITIALIZING_SYSTEM_CORE...</span>
+        </div>
+        <div class="w-64 h-2 bg-borderGray overflow-hidden border border-borderGray">
+            <div class="h-full bg-accent animate-pulse w-full"></div>
+        </div>
+    </div>
+
+    <!-- TAB OR NAV BAR WITH SEARCH, DARK/LIGHT TOGGLE & HAMBURGER MENU -->
+    <nav class="sticky top-0 z-50 bg-black border-b border-borderGray px-4 sm:px-6 py-4 flex flex-wrap justify-between items-center">
+        <div class="flex items-center space-x-4">
+            <!-- Icon Component (Terminal Symbol) -->
+            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="text-accent font-bold tracking-widest text-base sm:text-lg">PORTFOLLIO</span>
+            <span class="hidden xl:inline text-xs text-gray-400"> // ENGINEERING + PHOTOGRAPHY</span>
+        </div>
+
+        <!-- SEARCH FIELD COMPONENT -->
+        <div class="hidden lg:flex items-center relative my-2 lg:my-0">
+            <svg class="w-4 h-4 text-gray-400 absolute left-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="SEARCH ARCHIVE [ESP32, SPICE, OPTICS]..." class="bg-cardBlack border border-borderGray text-xs text-white pl-9 pr-4 py-2 w-64 focus:outline-none focus:border-accent font-mono placeholder-gray-500">
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <!-- LIST OF LINKS (SOCIALS) -->
+            <div class="hidden lg:flex items-center space-x-3 text-xs text-gray-400 font-mono pr-4 border-r border-borderGray">
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">[ GH ]</a>
+                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">[ LI ]</a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">[ IG ]</a>
+            </div>
+
+            <!-- TAB NAVIGATION BUTTONS -->
+            <div class="hidden sm:flex space-x-2">
+                <button onclick="switchView('academics')" id="nav-academics" class="px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-accent text-black border border-accent transition-colors">
+                    01 // Academics
+                </button>
+                <button onclick="switchView('photography')" id="nav-photography" class="px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-cardBlack text-gray-300 border border-borderGray hover:border-accent transition-colors">
+                    02 // Photography
+                </button>
+            </div>
+
+            <!-- DYNAMIC METRICS COUNTER COMPONENT -->
+            <div class="hidden xl:flex items-center space-x-2 text-[10px] font-mono border-l border-borderGray pl-4">
+                <span class="text-gray-500">SYSTEM_FPS:</span>
+                <span id="fps-counter" class="text-accent font-bold">60</span>
+                <span class="text-gray-500 ml-2">INTERACTION_COUNT:</span>
+                <span id="click-counter" class="text-accent font-bold">0</span>
+            </div>
+
+            <!-- TOGGLE FOR LIGHT AND DARK MODE BUTTON -->
+            <button onclick="toggleTheme()" class="px-3 py-2 text-xs font-mono font-bold uppercase border border-borderGray bg-cardBlack hover:border-accent text-accent transition-colors flex items-center space-x-1" title="Toggle Theme">
+                <span id="theme-icon">☀️</span>
+                <span id="theme-text" class="hidden md:inline">[ LIGHT ]</span>
+            </button>
+
+            <!-- HAMBURGER MENU BUTTON FOR MOBILE & TABLET -->
+            <button onclick="toggleMobileMenu()" class="sm:hidden px-3 py-2 bg-cardBlack text-accent border border-borderGray hover:border-accent focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- HAMBURGER MOBILE MENU DROPDOWN -->
+        <div id="mobile-menu" class="hidden w-full mt-4 pt-4 border-t border-borderGray flex flex-col space-y-3 sm:hidden">
+            <div class="flex space-x-2 w-full">
+                <button onclick="switchView('academics'); toggleMobileMenu();" class="flex-1 py-2 text-xs uppercase font-bold bg-accent text-black border border-accent">
+                    01 // Academics
+                </button>
+                <button onclick="switchView('photography'); toggleMobileMenu();" class="flex-1 py-2 text-xs uppercase font-bold bg-cardBlack text-gray-300 border border-borderGray">
+                    02 // Photography
+                </button>
+            </div>
+            <!-- Mobile Search Field -->
+            <div class="relative w-full">
+                <input type="text" oninput="handleSearch(this.value)" placeholder="SEARCH ARCHIVE..." class="w-full bg-cardBlack border border-borderGray text-xs text-white px-3 py-2 focus:outline-none focus:border-accent font-mono">
+            </div>
+            <!-- List of Mobile Social Links -->
+            <div class="flex justify-around text-xs font-mono text-gray-400 py-2 border-t border-borderGray">
+                <a href="https://github.com" target="_blank" class="hover:text-accent">[ GITHUB ]</a>
+                <a href="https://linkedin.com" target="_blank" class="hover:text-accent">[ LINKEDIN ]</a>
+                <a href="https://instagram.com" target="_blank" class="hover:text-accent">[ INSTAGRAM ]</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-grow">
+
+        <!-- VIEW 01: ACADEMICS & ENGINEERING -->
+        <section id="view-academics" class="block">
+            <!-- Hero Section -->
+            <header id="hero-header" class="relative min-h-[90vh] flex items-center border-b border-borderGray overflow-hidden bg-black py-16">
+                <!-- Background Image Layer with Dynamic Scroll-Driven Visual Transformation -->
+                <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+                    <img id="hero-bg-img" src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=2000&q=80" alt="Engineering and Optics Background" class="w-full h-full object-cover opacity-55 filter grayscale contrast-125">
+                    <div id="hero-overlay-dark" class="absolute inset-0 bg-black/60 transition-opacity duration-300"></div>
+                    <div id="hero-overlay-gradient" class="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-accent/20 via-accent/10 to-transparent transition-opacity duration-300"></div>
+                    <div class="absolute inset-0 bg-[linear-gradient(to_right,#222_1px,transparent_1px),linear-gradient(to_bottom,#222_1px,transparent_1px)] bg-[size:3rem_3rem] opacity-20"></div>
+                </div>
+
+                <div class="max-w-7xl mx-auto px-6 relative z-10 w-full flex flex-col gap-12">
+                    <div class="max-w-4xl space-y-6">
+                        <div class="inline-block px-3 py-1 bg-accent text-black text-xs font-bold uppercase tracking-widest">
+                            SYS_STATUS: ONLINE // DUAL TRAIT: ENGINEERING + OPTICS
+                        </div>
+                        <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-none">
+                            ENGINEERING SYSTEMS & <span class="text-accent">VISUAL OPTICS.</span>
+                        </h1>
+                        <p class="text-gray-300 text-sm sm:text-base max-w-2xl leading-relaxed">
+                            Electronics Engineering student bridging rigorous analog circuit design, microcontroller code, and deliberate architectural photography through a strict brutalist lens.
+                        </p>
+                        <div class="flex flex-wrap gap-4 pt-4">
+                            <!-- Button Component -->
+                            <a href="#projects" class="px-6 py-3 bg-accent text-black font-bold text-xs uppercase tracking-wider hover:bg-accentHover transition-colors border border-accent">
+                                View Projects
+                            </a>
+                            <!-- Button Component -->
+                            <button onclick="switchView('photography')" class="px-6 py-3 bg-cardBlack text-white font-bold text-xs uppercase tracking-wider border border-borderGray hover:border-accent transition-colors">
+                                Explore Photography Archive &rarr;
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Elongated camera photo card placed strictly below the text -->
+                    <div class="border border-borderGray p-6 bg-cardBlack/95 backdrop-blur space-y-4 max-w-4xl w-full">
+                        <div class="relative w-full aspect-[16/10] sm:aspect-[21/10] border border-borderGray overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1400&q=80" alt="Featured Hero Lens" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-700">
+                            <div class="absolute top-3 left-3 px-2.5 py-1 bg-black/90 text-[10px] text-accent font-mono border border-borderGray">
+                                // FEATURED_OPTICAL_FRAME_01
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row justify-between gap-2 text-xs text-gray-300 font-mono pt-3 border-t border-borderGray">
+                            <div><span class="text-gray-500">OPTICAL SETUP:</span> 35MM MANUAL f/2 PRIME LENS</div>
+                            <div><span class="text-gray-500">CORE TELEMETRY:</span> ANALOG CIRCUITRY & C++</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Projects Section -->
+            <section id="projects" class="py-20 px-6 max-w-7xl mx-auto">
+                <div class="mb-12 border-b border-borderGray pb-4 flex justify-between items-end">
+                    <div>
+                        <span class="text-accent text-xs uppercase tracking-widest">// MODULE_01</span>
+                        <h2 class="text-2xl sm:text-3xl font-black uppercase mt-1">Selected Engineering Works & Architecture</h2>
+                    </div>
+                    <span class="text-xs text-gray-500 hidden sm:inline">[ 6 COMPREHENSIVE REPOSITORIES ]</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 searchable-container">
+                    <!-- Project 1 -->
+                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
+                                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" alt="Analog Signal Processor PCB" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ HARDWARE_PCB ]</div>
+                            </div>
+                            <div class="flex justify-between items-start pt-2">
+                                <span class="text-xs font-bold text-accent">[ 01 ]</span>
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">Hardware / Spice</span>
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">Analog Signal Processor & Active Filter Array</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Designed, simulated, and fabricated multi-stage active operational amplifier filters optimized for ultra-low noise precision sensor telemetry. Performed exhaustive frequency response analysis using SPICE models, mitigating thermal noise interference and stabilizing cutoff thresholds across varying environmental loads.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Target Bandwidth: 0.1Hz - 50kHz</div>
+                                <div>• Component Tolerance: ±1% Precision</div>
+                                <div>• Validation: Oscilloscope & Bode Plots</div>
+                                <div>• Topology: Multiple Feedback Butterworth</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
+                            <span class="text-gray-500">C++ / SPICE / Altium</span>
+                            <span class="text-accent">SOURCE_CODE &rarr;</span>
+                        </div>
+                    </article>
+
+                    <!-- Project 2 -->
+                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
+                                <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80" alt="KBC Interactive Engine Screen" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ REACT_ENGINE ]</div>
+                            </div>
+                            <div class="flex justify-between items-start pt-2">
+                                <span class="text-xs font-bold text-accent">[ 02 ]</span>
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">Interactive App</span>
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">KBC Interactive Trivia Engine & Quiz System</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Developed a fully responsive, high-performance web-based trivia application emulating complex broadcast quiz logic. Features real-time countdown timers, randomized question banks, interactive lifeline simulations, and persistent state management wrapped in a ruthless brutalist user interface.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Framework: React 18 / Hooks</div>
+                                <div>• Styling: Tailwind CSS Monolith</div>
+                                <div>• State Architecture: Reducer Pattern</div>
+                                <div>• Optimization: Zero-Lag Event Listeners</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
+                            <span class="text-gray-500">React / Tailwind</span>
+                            <span class="text-accent">LIVE_DEMO &rarr;</span>
+                        </div>
+                    </article>
+
+                    <!-- Project 3 -->
+                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
+                                <img src="https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=800&q=80" alt="Embedded Microcontroller Circuit" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ EMBEDDED_NODE ]</div>
+                            </div>
+                            <div class="flex justify-between items-start pt-2">
+                                <span class="text-xs font-bold text-accent">[ 03 ]</span>
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">Embedded System</span>
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">Microcontroller Telemetry & Wireless Node</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Engineered low-power sensor node firmware written in bare-metal C for autonomous environmental monitoring. Implemented SPI/I2C communication protocols to interface atmospheric sensors with low-power radio transceivers, achieving extended battery longevity and dependable packet delivery.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Architecture: ARM Cortex-M0+</div>
+                                <div>• Protocols: SPI, I2C, UART, RF</div>
+                                <div>• Power Profile: Ultra-Low Sleep</div>
+                                <div>• Firmware: Bare-Metal C / RTOS</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
+                            <span class="text-gray-500">Embedded C</span>
+                            <span class="text-accent">GITHUB &rarr;</span>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Reference Images Sub-Section for Academics -->
+                <div class="border border-borderGray bg-cardBlack p-6 space-y-6">
+                    <div class="flex justify-between items-center border-b border-borderGray pb-3">
+                        <span class="text-accent text-xs font-bold tracking-widest">// REFERENCE_GALLERY: CIRCUIT SCHEMATICS & BENCH TESTS</span>
+                        <span class="text-[10px] text-gray-500 font-mono">ANALOG // SPICE // PCB_LAYOUT</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="border border-borderGray bg-black p-4 space-y-3">
+                            <div class="h-48 bg-[#111] border border-borderGray relative overflow-hidden flex items-center justify-center group">
+                                <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80" alt="Circuit Schematic Reference" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">FIG 1.1: SPICE PLOT</div>
+                            </div>
+                            <p class="text-xs text-gray-400">Frequency response bode plot validating operational amplifier attenuation curves.</p>
+                        </div>
+                        <div class="border border-borderGray bg-black p-4 space-y-3">
+                            <div class="h-48 bg-[#111] border border-borderGray relative overflow-hidden flex items-center justify-center group">
+                                <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80" alt="Oscilloscope Bench Test" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">FIG 1.2: TRANSIENT TRACE</div>
+                            </div>
+                            <p class="text-xs text-gray-400">Oscilloscope capture verifying transient voltage suppression under heavy load switching.</p>
+                        </div>
+                        <div class="border border-borderGray bg-black p-4 space-y-3">
+                            <div class="h-48 bg-[#111] border border-borderGray relative overflow-hidden flex items-center justify-center group">
+                                <img src="https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=800&q=80" alt="Breadboard Prototypes" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">FIG 1.3: PROTOTYPE RIG</div>
+                            </div>
+                            <p class="text-xs text-gray-400">Initial breadboard prototyping stage prior to custom PCB etching and assembly.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- IoT & ESP Systems Section -->
+            <section id="iot-projects" class="py-20 px-6 max-w-7xl mx-auto border-t border-borderGray">
+                <div class="mb-12 border-b border-borderGray pb-4 flex justify-between items-end">
+                    <div>
+                        <span class="text-accent text-xs uppercase tracking-widest">// MODULE_01_B</span>
+                        <h2 class="text-2xl sm:text-3xl font-black uppercase mt-1">ESP8266 & ESP32 IoT Repositories</h2>
+                    </div>
+                    <span class="text-xs text-gray-500 hidden sm:inline">[ 3 EMBEDDED SYSTEMS ]</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 searchable-container">
+                    <!-- Project 4: ESP8266 IoT Hub -->
+                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
+                                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" alt="ESP8266 Node Controller" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ ESP8266_HUB ]</div>
+                            </div>
+                            <div class="flex justify-between items-start pt-2">
+                                <span class="text-xs font-bold text-accent">[ 04 ]</span>
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">IoT / ESP8266</span>
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">ESP8266 Wi-Fi Automated Sensor Hub</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Built an autonomous IoT monitoring node using the ESP8266 Wi-Fi SoC integrated with DHT22 temperature/humidity sensors and light dependent resistors. Programmed using custom C++ firmware with captive portal Wi-Fi configuration and secure MQTT client publishing to cloud broker platforms.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Microcontroller: ESP8266 (NodeMCU)</div>
+                                <div>• Protocols: MQTT over TLS, HTTP</div>
+                                <div>• Sensors: DHT22, LDR, Soil Moisture</div>
+                                <div>• Firmware: C++ / Arduino Framework</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
+                            <span class="text-gray-500">ESP8266 / MQTT</span>
+                            <span class="text-accent">GITHUB &rarr;</span>
+                        </div>
+                    </article>
+
+                    <!-- Project 5: ESP32 Cam Surveillance -->
+                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
+                                <img src="https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&w=800&q=80" alt="ESP32 CAM Hardware Rig" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ ESP32_VISION ]</div>
+                            </div>
+                            <div class="flex justify-between items-start pt-2">
+                                <span class="text-xs font-bold text-accent">[ 05 ]</span>
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">ESP32 / Camera</span>
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">ESP32-CAM Wireless Vision & Stream Node</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Developed a low-cost, low-latency wireless surveillance and frame capture device powered by the dual-core ESP32-CAM module. Configured internal PSRAM frame buffers for high-resolution JPEG streaming over local Wi-Fi networks with embedded web server controls and motion detection frame differencing.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• SoC: ESP32-S with OV2640 Camera</div>
+                                <div>• Streaming: MJPEG over HTTP</div>
+                                <div>• Memory: 4MB PSRAM Buffer</div>
+                                <div>• Processing: Frame Differencing Motion Detection</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
+                            <span class="text-gray-500">ESP32-CAM / C++</span>
+                            <span class="text-accent">GITHUB &rarr;</span>
+                        </div>
+                    </article>
+
+                    <!-- Project 6: ESP32 Mesh & Automation -->
+                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
+                                <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80" alt="ESP32 Wireless Mesh Array" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ MESH_PROTOCOL ]</div>
+                            </div>
+                            <div class="flex justify-between items-start pt-2">
+                                <span class="text-xs font-bold text-accent">[ 06 ]</span>
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">Mesh / Home Auto</span>
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">ESP32 Decentralized Mesh Home Automation</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Engineered a self-healing wireless mesh network of multiple ESP32 nodes communicating via ESP-NOW protocols to control relay switches, lighting arrays, and HVAC triggers across multi-room environments without requiring central router connectivity.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Protocol: painlessMesh / ESP-NOW</div>
+                                <div>• Actuators: Solid-State Relays, PWM Dimming</div>
+                                <div>• Deployment: Multi-Node Distributed Array</div>
+                                <div>• Update Pipeline: Secure OTA Flashing</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
+                            <span class="text-gray-500">ESP32 / Mesh Protocol</span>
+                            <span class="text-accent">GITHUB &rarr;</span>
+                        </div>
+                    </article>
+                </div>
+            <!-- Reference Images Sub-Section for IoT -->
+                <div class="border border-borderGray bg-cardBlack p-6 space-y-6 mb-16">
+                    <div class="flex justify-between items-center border-b border-borderGray pb-3">
+                        <span class="text-accent text-xs font-bold tracking-widest">// REFERENCE_GALLERY: ESP HARDWARE & DEPLOYED NODES</span>
+                        <span class="text-[10px] text-gray-500 font-mono">ESP8266 // ESP32-CAM // MESH_NODES</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="border border-borderGray bg-black p-4 space-y-3">
+                            <div class="h-56 bg-[#111] border border-borderGray relative overflow-hidden flex items-center justify-center group">
+                                <img src="https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&w=900&q=80" alt="ESP Node Deployment" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform">
+                                <div class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">FIG 2.1: ESP32-CAM RIG</div>
+                            </div>
+                            <p class="text-xs text-gray-400">Deployed ESP32-CAM enclosure with external antenna wiring for long-range wireless streaming tests.</p>
+                        </div>
+                        <div class="border border-borderGray bg-black p-4 space-y-3">
+                            <div class="h-56 bg-[#111] border border-borderGray relative overflow-hidden flex items-center justify-center group">
+                                <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=900&q=80" alt="Firmware Telemetry Interface" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform">
+                                <div class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">FIG 2.2: MESH MONITOR</div>
+                            </div>
+                            <p class="text-xs text-gray-400">Serial terminal monitor capturing real-time packet exchange across the decentralized ESP-NOW mesh network.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- College Committees & Leadership Section -->
+            <section id="committees" class="py-20 px-6 max-w-7xl mx-auto border-t border-borderGray mb-16">
+                <div class="mb-12 border-b border-borderGray pb-4 flex justify-between items-end">
+                    <div>
+                        <span class="text-accent text-xs uppercase tracking-widest">// MODULE_02</span>
+                        <h2 class="text-2xl sm:text-3xl font-black uppercase mt-1">College Committees & Technical Leadership</h2>
+                    </div>
+                    <span class="text-xs text-gray-500 hidden sm:inline">[ ORGANIZATIONAL MILESTONES ]</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+                    <!-- Committee Role 1 -->
+                    <article class="border border-borderGray bg-cardBlack p-8 space-y-6 hover:border-accent transition-colors">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs font-bold text-accent">[ TECHNICAL_HEAD // 2025 - PRESENT ]</span>
+                            <span class="text-[10px] text-gray-500 font-mono">ACTIVE</span>
+                        </div>
+                        <h3 class="text-xl font-bold">Electronics & Robotics Society</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">
+                            Directing technical operations, curating hands-on workshops, and leading mentorship initiatives for undergraduate engineering cohorts. Spearheaded practical training sessions focusing on printed circuit board (PCB) design workflows, microcontroller firmware architecture, and advanced hardware debugging methodologies. Successfully mentored multiple student teams participating in regional robotics and automation exhibitions, fostering an environment of rigorous engineering standards, collaborative schematic reviews, and fault-tolerant hardware prototyping.
+                        </p>
+                        <div class="space-y-2 text-[11px] text-gray-500 font-mono pt-4 border-t border-borderGray">
+                            <div>• Conducted 12+ intensive PCB layout & soldering workshops</div>
+                            <div>• Managed inventory of oscilloscopes, multimeters, and dev boards</div>
+                            <div>• Coordinated collaborative inter-departmental hardware builds</div>
+                            <div>• Established standardized documentation templates for hardware projects</div>
+                        </div>
+                        <div class="pt-4 border-t border-borderGray flex justify-between items-center text-xs text-gray-500 font-mono">
+                            <span>VENUE: CAMPUS ELECTRONICS LAB</span>
+                            <span class="text-accent">EXECUTIVE LEADERSHIP</span>
+                        </div>
+                    </article>
+
+                    <!-- Committee Role 2 -->
+                    <article class="border border-borderGray bg-cardBlack p-8 space-y-6 hover:border-accent transition-colors">
+                        <div class="flex justify-between items-start">
+                            <span class="text-xs font-bold text-accent">[ CORE_ORGANIZER // 2024 - 2025 ]</span>
+                            <span class="text-[10px] text-gray-500 font-mono">COMPLETED</span>
+                        </div>
+                        <h3 class="text-xl font-bold">Annual University Tech Fest Committee</h3>
+                        <p class="text-xs text-gray-400 leading-relaxed">
+                            Oversaw comprehensive event logistics, technical arena setup, and competitive coding and hardware hackathon structures for the university's flagship annual symposium. Collaborated with faculty boards and industry sponsors to manage an active participant pool exceeding 500+ engineers, ensuring seamless execution of complex time-sensitive technical challenges and exhibitions. Maintained strict safety compliance across high-voltage electronics arenas and automated submission tracking platforms.
+                        </p>
+                        <div class="space-y-2 text-[11px] text-gray-500 font-mono pt-4 border-t border-borderGray">
+                            <div>• Streamlined automated participant registration & scoreboards</div>
+                            <div>• Managed event safety protocols and laboratory equipment allocations</div>
+                            <div>• Liaised with keynote speakers and external corporate judges</div>
+                            <div>• Orchestrated multi-stage prize distributions and event debriefs</div>
+                        </div>
+                        <div class="pt-4 border-t border-borderGray flex justify-between items-center text-xs text-gray-500 font-mono">
+                            <span>VENUE: MAIN AUDITORIUM & TECH COMPLEX</span>
+                            <span class="text-accent">OPERATIONS & LOGISTICS</span>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Reference Images Sub-Section for Committees -->
+                <div class="border border-borderGray bg-cardBlack p-6 space-y-6">
+                    <div class="flex justify-between items-center border-b border-borderGray pb-3">
+                        <span class="text-accent text-xs font-bold tracking-widest">// REFERENCE_GALLERY: WORKSHOPS & TECH FEST EVENTS</span>
+                        <span class="text-[10px] text-gray-500 font-mono">SOCIETY // LAB // SYMPOSIUM</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="border border-borderGray bg-black p-4 space-y-3">
+                            <div class="h-56 bg-[#111] border border-borderGray relative overflow-hidden flex items-center justify-center group">
+                                <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=900&q=80" alt="Workshop Session" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform">
+                                <div class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">FIG 3.1: WORKSHOP COHORT</div>
+                            </div>
+                            <p class="text-xs text-gray-400">Conducting hands-on soldering and microcontroller programming sessions for undergraduate cohorts.</p>
+                        </div>
+                        <div class="border border-borderGray bg-black p-4 space-y-3">
+                            <div class="h-56 bg-[#111] border border-borderGray relative overflow-hidden flex items-center justify-center group">
+                                <img src="https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=900&q=80" alt="Tech Fest Arena" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform">
+                                <div class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">FIG 3.2: TECH FEST ARENA</div>
+                            </div>
+                            <p class="text-xs text-gray-400">Managing arena logistics and live evaluation tracks during the annual university symposium.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 12. CAROUSEL COMPONENT -->
+            <section class="py-12 px-6 max-w-7xl mx-auto" id="carousel-section">
+                <div class="border border-borderGray bg-cardBlack p-6 space-y-6">
+                    <div class="flex justify-between items-center border-b border-borderGray pb-3">
+                        <span class="text-accent text-xs font-bold tracking-widest">// COMPONENT: INTERACTIVE CAROUSEL</span>
+                        <span class="text-[10px] text-gray-500 font-mono" id="carousel-indicator">1 / 3</span>
+                    </div>
+                    <div class="relative h-72 sm:h-80 border border-borderGray bg-black overflow-hidden flex items-center justify-center">
+                        <div class="carousel-slide absolute inset-0 transition-opacity duration-700 opacity-100 flex flex-col items-center justify-center p-6 text-center">
+                            <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1200&q=80" alt="Slide 1" class="absolute inset-0 w-full h-full object-cover opacity-30 filter grayscale contrast-125">
+                            <div class="relative z-10 space-y-2">
+                                <span class="px-2 py-0.5 bg-accent text-black text-[10px] font-bold uppercase">FEATURED OPTICS</span>
+                                <h3 class="text-xl sm:text-2xl font-black uppercase">Mechanical Lens & Helical Focus Assembly</h3>
+                            </div>
+                        </div>
+                        <div class="carousel-slide absolute inset-0 transition-opacity duration-700 opacity-0 flex flex-col items-center justify-center p-6 text-center">
+                            <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80" alt="Slide 2" class="absolute inset-0 w-full h-full object-cover opacity-30 filter grayscale contrast-125">
+                            <div class="relative z-10 space-y-2">
+                                <span class="px-2 py-0.5 bg-blue-600 text-white text-[10px] font-bold uppercase">BENCH TELEMETRY</span>
+                                <h3 class="text-xl sm:text-2xl font-black uppercase">Oscilloscope Square Wave Analysis</h3>
+                            </div>
+                        </div>
+                        <div class="carousel-slide absolute inset-0 transition-opacity duration-700 opacity-0 flex flex-col items-center justify-center p-6 text-center">
+                            <img src="https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&w=1200&q=80" alt="Slide 3" class="absolute inset-0 w-full h-full object-cover opacity-30 filter grayscale contrast-125">
+                            <div class="relative z-10 space-y-2">
+                                <span class="px-2 py-0.5 bg-yellow-500 text-black text-[10px] font-bold uppercase">IOT MESH NODES</span>
+                                <h3 class="text-xl sm:text-2xl font-black uppercase">ESP32 Decentralized Automation Rig</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center pt-2">
+                        <button onclick="prevSlide()" class="px-4 py-2 bg-black text-white border border-borderGray hover:border-accent text-xs font-bold uppercase">&larr; PREV</button>
+                        <button onclick="nextSlide()" class="px-4 py-2 bg-black text-white border border-borderGray hover:border-accent text-xs font-bold uppercase">NEXT &rarr;</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 1. ACCORDION COMPONENT -->
+            <section class="py-12 px-6 max-w-7xl mx-auto" id="faq-section">
+                <div class="border border-borderGray bg-cardBlack p-6 space-y-6">
+                    <div class="border-b border-borderGray pb-3">
+                        <span class="text-accent text-xs font-bold tracking-widest">// COMPONENT: FAQ ACCORDION</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="border border-borderGray bg-black">
+                            <button onclick="toggleAccordion('acc-1')" class="w-full px-4 py-3 flex justify-between items-center text-left text-xs font-bold uppercase hover:text-accent transition-colors">
+                                <span>01. What core tooling is used for analog circuit designs?</span>
+                                <span id="icon-acc-1" class="text-accent font-mono text-base">+</span>
+                            </button>
+                            <div id="acc-1" class="hidden px-4 pb-3 text-xs text-gray-400 leading-relaxed border-t border-borderGray pt-2">
+                                We utilize SPICE simulation models for active filter frequency response, Altium Designer for multi-layer PCB layouting, and bench oscilloscopes for transient voltage validation.
+                            </div>
+                        </div>
+                        <div class="border border-borderGray bg-black">
+                            <button onclick="toggleAccordion('acc-2')" class="w-full px-4 py-3 flex justify-between items-center text-left text-xs font-bold uppercase hover:text-accent transition-colors">
+                                <span>02. How are the 22 photography frames documented?</span>
+                                <span id="icon-acc-2" class="text-accent font-mono text-base">+</span>
+                            </button>
+                            <div id="acc-2" class="hidden px-4 pb-3 text-xs text-gray-400 leading-relaxed border-t border-borderGray pt-2">
+                                All 22 photographs capture brutalist architectural lines and nocturnal lighting studies using manual prime lenses. Each frame features direct deep links to the verified Instagram handle <a href="https://instagram.com/esr__lens" target="_blank" class="text-accent underline font-mono">@esr__lens</a>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        
+            <!-- ACCORDION DIAGNOSTICS COMPONENT -->
+            <section id="faq-accordion" class="py-20 px-6 max-w-7xl mx-auto border-t border-borderGray">
+                <div class="mb-8 border-b border-borderGray pb-4">
+                    <span class="text-accent text-xs uppercase tracking-widest">// TECHNICAL_ACCORDION</span>
+                    <h2 class="text-2xl sm:text-3xl font-black uppercase mt-1">Laboratory & Diagnostic Specifications</h2>
+                </div>
+                <div class="space-y-4">
+                    <div class="border border-borderGray bg-cardBlack">
+                        <button onclick="toggleAccordion('acc-1')" class="w-full p-4 text-left flex justify-between items-center font-bold text-sm hover:text-accent">
+                            <span>01 // ANALOG & DIGITAL CIRCUIT TESTING PROTOCOLS</span>
+                            <span id="acc-1-icon" class="text-accent">+</span>
+                        </button>
+                        <div id="acc-1" class="hidden p-4 pt-0 text-xs text-gray-400 border-t border-borderGray/50 space-y-2">
+                            <p>All analog filter topologies undergo Bode plot sweep testing from 0.1Hz up to 100kHz using calibrated digital storage oscilloscopes. Noise floor thresholds are guaranteed below -85dBV across ambient operational ranges.</p>
+                        </div>
+                    </div>
+                    <div class="border border-borderGray bg-cardBlack">
+                        <button onclick="toggleAccordion('acc-2')" class="w-full p-4 text-left flex justify-between items-center font-bold text-sm hover:text-accent">
+                            <span>02 // FIRMWARE OPTIMIZATION & DEEP SLEEP PROFILES</span>
+                            <span id="acc-2-icon" class="text-accent">+</span>
+                        </button>
+                        <div id="acc-2" class="hidden p-4 pt-0 text-xs text-gray-400 border-t border-borderGray/50 space-y-2">
+                            <p>ESP32 and ESP8266 battery-powered nodes employ RTC memory retention and ultra-low power (ULP) coprocessor routines to keep active current draw under 15µA during sleep cycles.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COMMENT STREAM COMPONENT -->
+            <section id="comments-section" class="py-20 px-6 max-w-7xl mx-auto border-t border-borderGray">
+                <div class="mb-8 border-b border-borderGray pb-4">
+                    <span class="text-accent text-xs uppercase tracking-widest">// PEER_REVIEWS</span>
+                    <h2 class="text-2xl sm:text-3xl font-black uppercase mt-1">Interactive Telemetry & Comments</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Form -->
+                    <form onsubmit="postComment(event)" class="border border-borderGray bg-cardBlack p-6 space-y-4">
+                        <div class="text-xs text-accent font-bold">// ADD_PUBLIC_LOG</div>
+                        <input type="text" id="comment-author" required placeholder="IDENTIFIER [Name / Handle]..." class="w-full bg-black border border-borderGray p-3 text-xs text-white focus:outline-none focus:border-accent font-mono">
+                        <textarea id="comment-body" required rows="4" placeholder="TELEMETRY_LOG [Enter technical feedback or comments]..." class="w-full bg-black border border-borderGray p-3 text-xs text-white focus:outline-none focus:border-accent font-mono"></textarea>
+                        <button type="submit" class="px-6 py-3 bg-accent text-black font-bold text-xs uppercase tracking-wider hover:bg-accentHover">Submit Comment Log</button>
+                    </form>
+                    <!-- Feed -->
+                    <div id="comments-feed" class="border border-borderGray bg-cardBlack p-6 space-y-4 max-h-96 overflow-y-auto font-mono text-xs">
+                        <div class="border-b border-borderGray pb-3">
+                            <div class="text-accent font-bold">[ SYSTEM_ADMIN // 2026-11-03 ]</div>
+                            <p class="text-gray-300 mt-1">Telemetry log operational. Terminal is open for public comments.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <!-- VIEW 02: PHOTOGRAPHY -->
+        <section id="view-photography" class="hidden">
+            <!-- Photography Hero -->
+            <header class="relative py-24 border-b border-borderGray bg-black px-6">
+                <div class="max-w-7xl mx-auto space-y-4">
+                    <span class="text-accent text-xs uppercase tracking-widest">// MODULE_02_OPTICS</span>
+                    <h1 class="text-4xl sm:text-6xl font-black tracking-tight uppercase">Visual Frame Archive &mdash; 22 Optical Studies</h1>
+                    <p class="text-gray-400 text-sm sm:text-base max-w-2xl leading-relaxed">
+                        A curated archive of brutalist architectural lines, severe geometric framing, nocturnal light studies, and high-contrast monochrome captures executed through manual mechanical lenses and strict zone system metering.
+                    </p>
+                    <div class="pt-2">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-4 py-2 bg-cardBlack text-accent border border-borderGray hover:border-accent text-xs font-mono uppercase tracking-wider transition-colors">
+                            [ VIEW FULL INSTAGRAM FEED &rarr; ]
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- INTERACTIVE CAROUSEL COMPONENT -->
+            <section class="py-12 px-6 max-w-7xl mx-auto border-b border-borderGray">
+                <div class="mb-6 flex justify-between items-center">
+                    <span class="text-accent text-xs font-bold tracking-widest">// FEATURED_SLIDESHOW_CAROUSEL</span>
+                    <div class="flex space-x-2">
+                        <button onclick="prevSlide()" class="px-3 py-1 bg-cardBlack text-accent border border-borderGray hover:border-accent text-xs font-mono">&larr; PREV</button>
+                        <button onclick="nextSlide()" class="px-3 py-1 bg-cardBlack text-accent border border-borderGray hover:border-accent text-xs font-mono">NEXT &rarr;</button>
+                    </div>
+                </div>
+                <div class="relative w-full h-[50vh] sm:h-[60vh] bg-black border border-borderGray overflow-hidden">
+                    <img id="carousel-img" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1600&q=80" alt="Carousel Slide" class="w-full h-full object-cover filter grayscale contrast-125 transition-all duration-500">
+                    <div class="absolute bottom-4 left-4 right-4 sm:right-auto px-3 py-1.5 bg-black/90 text-accent font-mono text-xs border border-borderGray" id="carousel-caption">
+                        [ SLIDE 1 / 3 ] BRUTALIST CONCRETE STRUCTURE I
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gallery Grid: All 22 Photos -->
+            <section class="py-20 px-6 max-w-7xl mx-auto">
+                <div class="mb-12 border-b border-borderGray pb-4 flex justify-between items-end">
+                    <div>
+                        <span class="text-accent text-xs uppercase tracking-widest">// ARCHIVE_INDEX</span>
+                        <h2 class="text-2xl sm:text-3xl font-black uppercase mt-1">Full 22-Frame Optical Repository</h2>
+                    </div>
+                    <span class="text-xs text-gray-500 hidden sm:inline">[ LINKED TO INSTAGRAM ARCHIVE ]</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16 searchable-container">
+                    <!-- Frame 01 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full  bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://github.com/Ebaad-esr/portfollio/blob/main/WhatsApp%20Image%202026-11-04%20at%204.25.43%20PM%20(1).jpeg?raw=true" alt="Frame 01" class="w-full h-full object-   group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_01 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Brutalist Concrete Study I</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Architectural documentation of modernist institutional complexes emphasizing stark shadow casting, orthogonal grid alignment, and tonal separation via zone system exposure.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 28mm Prime | ISO: 200 | f/8 | 1/500s</div>
+                                <div>• Lighting: Harsh Direct Midday Sun</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: URBAN CORE // WING A</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 02 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com/esr__lens" target="_blank" rel="noopener noreferrer" class="block w-full h-200 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://github.com/Ebaad-esr/portfollio/blob/main/WhatsApp%20Image%202026-11-04%20at%204.25.43%20PM.jpeg?raw=true" alt="Frame 02" class="w-full h-full object-cover   group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_02 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Nocturne Light Lines II</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Exploration of nocturnal urban illumination using wide-aperture prime glass, focusing on sharp edge contrast against deep blacks and atmospheric haze.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 50mm Prime | ISO: 1600 | f/2 | 1/60s</div>
+                                <div>• Lighting: Artificial Streetlamp Array</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: METROPOLITAN TRANSIT</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 03 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com/esr__lens" target="_blank" rel="noopener noreferrer" class="block w-full h-200 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://github.com/Ebaad-esr/portfollio/blob/main/WhatsApp%20Image%202026-11-04%20at%204.25.31%20PM.jpeg?raw=true" alt="Frame 03" class="w-full h-full object-cover  group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_03 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Industrial Circuitry Macro III</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Macro optical study capturing copper PCB traces, component density, and soldered joints under high magnification.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 90mm Macro | ISO: 400 | f/11 | 1/125s</div>
+                                <div>• Lighting: Dual Ring LED Studio</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: ELECTRONICS BENCH</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 04 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com/esr__lens" target="_blank" rel="noopener noreferrer" class="block w-full h-200 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://github.com/Ebaad-esr/portfollio/blob/main/WhatsApp%20Image%202026-11-04%20at%204.25.33%20PM.jpeg?raw=true" alt="Frame 04" class="w-full h-full object-cover  group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_04 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Mechanical Shutter Mechanics IV</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Close-up inspection of vintage mechanical camera aperture blades and manual helicoid threading.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 50mm + Extension | ISO: 200 | f/5.6 | 1/250s</div>
+                                <div>• Lighting: Side Directional Softbox</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: OPTICS LAB</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 05 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-200 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://github.com/Ebaad-esr/portfollio/blob/main/WhatsApp%20Image%202026-11-04%20at%204.25.41%20PM.jpeg?raw=true" alt="Frame 05" class="w-full h-full object-cover  group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_05 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Linear Steel Bridge V</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Symmetrical framing of pedestrian overpass truss structures highlighting repeating geometric ironwork and vanishing points.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 35mm Prime | ISO: 100 | f/8 | 1/1000s</div>
+                                <div>• Lighting: Natural Overcast Diffused</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: RIVER SPAN BRIDGE</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 06 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-200 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://github.com/Ebaad-esr/portfollio/blob/main/WhatsApp%20Image%202026-11-04%20at%204.25.42%20PM%20(2).jpeg?raw=true" alt="Frame 06" class="w-full h-full object-cover  group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_06 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Oscilloscope Trace Capture VI</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Long exposure recording of active square wave telemetry across digital storage oscilloscope display glass.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 50mm Prime | ISO: 400 | f/4 | 1/2s</div>
+                                <div>• Lighting: CRT Self-Illuminated</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: LAB BENCH 04</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 07 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-200 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://github.com/Ebaad-esr/portfollio/blob/main/WhatsApp%20Image%202026-11-04%20at%204.25.42%20PM%20(1).jpeg?raw=true" alt="Frame 07" class="w-full h-full object-cover  group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_07 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Stairwell Spiral Geometry VII</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Looking down a brutalist concrete helical staircase, focusing on rhythmic circular steps and vertical handrail alignment.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 24mm Wide | ISO: 800 | f/4 | 1/60s</div>
+                                <div>• Lighting: Top Skylight Shaft</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: ACADEMIC TOWER</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 08 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-200 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://github.com/Ebaad-esr/portfollio/blob/main/WhatsApp%20Image%202026-11-04%20at%204.25.39%20PM.jpeg?raw=true" alt="Frame 08" class="w-full h-full object-cover  group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_08 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Breadboard Wiring Matrix VIII</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Detailed overhead shot of multi-colored jumper wires routing across active breadboard electronic prototypes.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 50mm Prime | ISO: 200 | f/5.6 | 1/100s</div>
+                                <div>• Lighting: Overhead Task Lamp</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: WORKSHOP DESK</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 09 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-200 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://github.com/Ebaad-esr/portfollio/blob/main/WhatsApp%20Image%202026-11-04%20at%204.25.42%20PM.jpeg?raw=true" alt="Frame 09" class="w-full h-full object-cover  group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_09 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Terminal Code Matrix IX</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                High contrast capture of C++ embedded firmware running inside dark terminal environments.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 35mm Prime | ISO: 100 | f/2.8 | 1/125s</div>
+                                <div>• Lighting: Monitor Backlight</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: WORKSTATION 01</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 10 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1000&q=80" alt="Frame 10" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_10 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Workshop Collaboration X</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Candid documentary shot of student engineers analyzing schematics during an electronics society seminar.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 50mm Prime | ISO: 800 | f/2.8 | 1/160s</div>
+                                <div>• Lighting: Ambient Indoor Fluorescent</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: LAB SEMINAR HALL</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 11 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1000&q=80" alt="Frame 11" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_11 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Auditorium Stage Lighting XI</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                High contrast capture of spotlight arrays and heavy steel rig structures inside the university technical symposium arena.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 35mm Prime | ISO: 400 | f/4 | 1/200s</div>
+                                <div>• Lighting: Stage Spotlights</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: MAIN AUDITORIUM</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 12 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1000&q=80" alt="Frame 12" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_12 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Industrial Pillar Texture XII</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Minimalist study of raw poured concrete pillar textures, formwork seams, and weathering marks.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 50mm Prime | ISO: 100 | f/8 | 1/250s</div>
+                                <div>• Lighting: Side Window Light</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: ENGINEERING BLOCK B</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 13 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1000&q=80" alt="Frame 13" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_13 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Facade Glass Reflection XIII</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Geometric interplay of structural glass curtain walls reflecting adjacent brutalist masonry.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 28mm Prime | ISO: 200 | f/5.6 | 1/500s</div>
+                                <div>• Lighting: Afternoon Sun Glare</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: CAMPUS PLAZA</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 14 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1000&q=80" alt="Frame 14" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_14 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Component Tray Inventory XIV</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Organized classification of resistors, capacitors, and IC chips in sectional storage drawers.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 50mm Prime | ISO: 400 | f/4 | 1/100s</div>
+                                <div>• Lighting: Cabinet LED Strip</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: PARTS DRAWER 03</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 15 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80" alt="Frame 15" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_15 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Focus Ring Helical XV</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Detailed macro study of knurled metal focus rings and depth of field scale engravings.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 90mm Macro | ISO: 200 | f/8 | 1/160s</div>
+                                <div>• Lighting: Studio Softbox Array</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: OPTICS BENCH</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 16 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1000&q=80" alt="Frame 16" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_16 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Concrete Bridge Pier XVI</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Monumental scale study of massive support pillars underneath an elevated highway overpass.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 24mm Wide | ISO: 200 | f/8 | 1/320s</div>
+                                <div>• Lighting: Overcast Daylight</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: OVERPASS JUNCTION</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 17 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1000&q=80" alt="Frame 17" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_17 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Soldering Station Sparks XVII</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                High-speed capture of rosin core solder application and thermal tip transfer during PCB rework.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 50mm Prime | ISO: 400 | f/2.8 | 1/1000s</div>
+                                <div>• Lighting: Bench Task Lamp</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: SOLDERING BAY</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 18 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=1000&q=80" alt="Frame 18" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_18 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Corridor Perspective XVIII</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                One-point perspective vanishing down a long institutional brutalist concrete hallway with recessed lighting grids.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 28mm Prime | ISO: 400 | f/5.6 | 1/60s</div>
+                                <div>• Lighting: Fluorescent Grid Array</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: RESEARCH WING</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 19 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&w=1000&q=80" alt="Frame 19" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_19 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">ESP32 Antenna Array XIX</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Close-up study of PCB trace antennas and IPEX connectors on wireless microcontroller boards.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 50mm Prime | ISO: 200 | f/4 | 1/125s</div>
+                                <div>• Lighting: Ring Light</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: IOT LAB BENCH</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 20 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1000&q=80" alt="Frame 20" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_20 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Serial Debugger Logs XX</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Close crop of hardware debugging output streams scrolling across high-density monospace displays.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 50mm Prime | ISO: 100 | f/2.8 | 1/200s</div>
+                                <div>• Lighting: Screen Emission</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: DEBUG TERMINAL</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 21 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1000&q=80" alt="Frame 21" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_21 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Hackathon Planning Session XXI</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Whiteboard architecture diagrams and timeline mapping during university technical committee sprint planning.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 35mm Prime | ISO: 400 | f/3.5 | 1/80s</div>
+                                <div>• Lighting: Recessed Ceiling Downlights</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: COMMITTEE HQ</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+
+                    <!-- Frame 22 -->
+                    <div class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 space-y-6">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block w-full h-80 bg-[#111111] border border-borderGray flex items-center justify-center relative overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1000&q=80" alt="Frame 22" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                            <div class="absolute top-3 left-3 px-2 py-0.5 bg-black/80 text-[10px] text-accent font-mono border border-borderGray">[ FRAME_22 // INSTAGRAM LINK ]</div>
+                        </a>
+                        <div class="space-y-2">
+                            <h4 class="text-sm font-bold uppercase">Final Exhibition Setup XXII</h4>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Completed hardware prototypes and optical print displays arranged for final jury review and symposium presentation.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Focal Length: 35mm Prime | ISO: 200 | f/4 | 1/125s</div>
+                                <div>• Lighting: Exhibition Spotlight Grid</div>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center text-xs text-gray-400 pt-4 border-t border-borderGray font-mono">
+                            <span>LOCATION: MAIN EXHIBITION HALL</span>
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">[ VIEW ON IG &rarr; ]</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reference Images Sub-Section for Photography -->
+                <div class="border border-borderGray bg-cardBlack p-6 space-y-6">
+                    <div class="flex justify-between items-center border-b border-borderGray pb-3">
+                        <span class="text-accent text-xs font-bold tracking-widest">// REFERENCE_GALLERY: EXTENDED OPTICAL STUDIES & LENS TESTS</span>
+                        <span class="text-[10px] text-gray-500 font-mono">35MM // ANALOG_METERING // GRAIN</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="border border-borderGray bg-black p-4 space-y-3">
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block h-48 bg-[#111] border border-borderGray relative overflow-hidden flex items-center justify-center group">
+                                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80" alt="Portrait Study Reference" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">FRAME 03: MONO PORTRAIT [ IG ]</div>
+                            </a>
+                            <p class="text-xs text-gray-400">High-contrast available light portrait study using side-angle natural illumination.</p>
+                        </div>
+                        <div class="border border-borderGray bg-black p-4 space-y-3">
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block h-48 bg-[#111] border border-borderGray relative overflow-hidden flex items-center justify-center group">
+                                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80" alt="Facade Study Reference" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">FRAME 04: FACADE GRID [ IG ]</div>
+                            </a>
+                            <p class="text-xs text-gray-400">Orthogonal facade composition emphasizing repetitive structural steel and glass panels.</p>
+                        </div>
+                        <div class="border border-borderGray bg-black p-4 space-y-3">
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="block h-48 bg-[#111] border border-borderGray relative overflow-hidden flex items-center justify-center group">
+                                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" alt="Macro Optics Reference" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute bottom-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">FRAME 05: OPTICAL MACRO [ IG ]</div>
+                            </a>
+                            <p class="text-xs text-gray-400">Macro view of mechanical lens aperture blades and manual focus helicoid mechanisms.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <!-- FOOTER SECTION -->
+    <footer id="contact" class="border-t border-borderGray bg-black py-16 px-6 mt-auto relative z-10">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div class="space-y-6">
+                <div>
+                    <span class="text-accent text-xs uppercase tracking-widest">// INITIATE_COMMUNICATION</span>
+                    <h2 class="text-3xl font-black uppercase mt-1">Let's Build Together</h2>
+                    <p class="text-xs text-gray-400 leading-relaxed mt-2">
+                        Available for engineering collaborations, hardware projects, or photography assignments. Reach out directly or connect via socials.
+                    </p>
+                </div>
+                <!-- Social Channels Grid -->
+                <div class="flex flex-wrap gap-3">
+                    <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-cardBlack border border-borderGray hover:border-accent text-xs text-gray-300 hover:text-accent transition-colors font-mono">
+                        GITHUB // [ @username ]
+                    </a>
+                    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-cardBlack border border-borderGray hover:border-accent text-xs text-gray-300 hover:text-accent transition-colors font-mono">
+                        LINKEDIN // [ /in/username ]
+                    </a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-cardBlack border border-borderGray hover:border-accent text-xs text-gray-300 hover:text-accent transition-colors font-mono">
+                        INSTAGRAM // [ @handle ]
+                    </a>
+                </div>
+            </div>
+            <div class="border border-borderGray bg-cardBlack p-6 space-y-4">
+                <div class="text-xs text-accent uppercase tracking-widest">// DIRECT_CONTACT</div>
+                <div class="flex flex-col sm:flex-row gap-4 items-center">
+                    <input type="text" readonly value="contact@engineering-portfolio.dev" class="w-full bg-black border border-borderGray px-4 py-3 text-xs text-gray-300 focus:outline-none font-mono">
+                    <button onclick="copyEmail()" class="w-full sm:w-auto px-6 py-3 bg-accent text-black text-xs font-bold uppercase tracking-wider hover:bg-accentHover whitespace-nowrap">
+                        Copy Email
+                    </button>
+                </div>
+                <div id="copy-msg" class="text-[10px] text-accent hidden font-mono">STATUS: EMAIL COPIED TO CLIPBOARD</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- INTERACTIVE JAVASCRIPT SYSTEM ENGINE -->
+    <script>
+        // Interactive Carousel Logic
+        const carouselSlides = [
+            { url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1600&q=80", title: "[ SLIDE 1 / 3 ] BRUTALIST CONCRETE STRUCTURE I" },
+            { url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80", title: "[ SLIDE 2 / 3 ] NOCTURNE LIGHT LINES II" },
+            { url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80", title: "[ SLIDE 3 / 3 ] OPTICAL SCHEMATIC MACRO III" }
+        ];
+        let currentSlide = 0;
+        function updateCarousel() {
+            document.getElementById('carousel-img').src = carouselSlides[currentSlide].url;
+            document.getElementById('carousel-caption').innerText = carouselSlides[currentSlide].title;
+        }
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % carouselSlides.length;
+            updateCarousel();
+        }
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + carouselSlides.length) % carouselSlides.length;
+            updateCarousel();
+        }
+
+        // View Switcher
+        function switchView(viewName) {
+            const academics = document.getElementById('view-academics');
+            const photography = document.getElementById('view-photography');
+            const btnA = document.getElementById('nav-academics');
+            const btnP = document.getElementById('nav-photography');
+
+            if (viewName === 'academics') {
+                academics.classList.remove('hidden');
+                photography.classList.add('hidden');
+                btnA.className = "px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-accent text-black border border-accent";
+                btnP.className = "px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-cardBlack text-gray-300 border border-borderGray";
+            } else {
+                academics.classList.add('hidden');
+                photography.classList.remove('hidden');
+                btnP.className = "px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-accent text-black border border-accent";
+                btnA.className = "px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-cardBlack text-gray-300 border border-borderGray";
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Accordion Toggle
+        function toggleAccordion(id) {
+            const el = document.getElementById(id);
+            const icon = document.getElementById(id + '-icon');
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                icon.innerText = '-';
+            } else {
+                el.classList.add('hidden');
+                icon.innerText = '+';
+            }
+        }
+
+        // Search Filter Engine
+        function handleSearch(query) {
+            const q = query.toLowerCase();
+            document.querySelectorAll('.searchable-item').forEach(item => {
+                const text = item.innerText.toLowerCase();
+                if (text.includes(q)) {
+                    item.style.display = '';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // Comment Posting System
+        function postComment(e) {
+            e.preventDefault();
+            const author = document.getElementById('comment-author').value;
+            const body = document.getElementById('comment-body').value;
+            const feed = document.getElementById('comments-feed');
+            const item = document.createElement('div');
+            item.className = "border-b border-borderGray pb-3";
+            item.innerHTML = `<div class="text-accent font-bold">[ ${author.toUpperCase()} // ${new Date().toISOString().split('T')[0]} ]</div><p class="text-gray-300 mt-1">${body}</p>`;
+            feed.prepend(item);
+            e.target.reset();
+        }
+
+        // Light / Dark Theme Switcher
+        function toggleTheme() {
+            const root = document.getElementById('html-root');
+            const isDark = root.classList.contains('dark');
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+
+            if (isDark) {
+                root.classList.remove('dark');
+                root.classList.add('light');
+                icon.innerText = '🌙';
+                text.innerText = '[ DARK ]';
+            } else {
+                root.classList.remove('light');
+                root.classList.add('dark');
+                icon.innerText = '☀️';
+                text.innerText = '[ LIGHT ]';
+            }
+        }
+
+        // Mobile Hamburger Menu
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Interactive Canvas Particle Grid Script
+        (function initCanvasGrid() {
+            const canvas = document.getElementById('interactive-grid-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let mouseX = -1000, mouseY = -1000;
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            window.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+
+            function draw() {
+                ctx.clearRect(0, 0, width, height);
+                const gap = 40;
+                ctx.fillStyle = '#FF9800';
+
+                for (let x = 0; x < width; x += gap) {
+                    for (let y = 0; y < height; y += gap) {
+                        const dist = Math.hypot(x - mouseX, y - mouseY);
+                        const radius = dist < 120 ? Math.max(1, 4 - dist / 30) : 1;
+                        ctx.beginPath();
+                        ctx.arc(x, y, radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+
+        // Reliable Email Copying
+        function copyEmail() {
+            const email = "contact@engineering-portfolio.dev";
+            const msg = document.getElementById('copy-msg');
+            const textArea = document.createElement("textarea");
+            textArea.value = email;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                msg.classList.remove('hidden');
+                setTimeout(() => msg.classList.add('hidden'), 3000);
+            } catch (err) {
+                console.error('Copy failed', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // Scroll Reveal Observer
+        window.addEventListener('DOMContentLoaded', () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+        });
+
+        // Dynamic Hero Scroll Transformation
+        window.addEventListener('scroll', () => {
+            const scrollPos = window.scrollY;
+            const heroImg = document.getElementById('hero-bg-img');
+            if (heroImg) {
+                const scaleVal = 1 + (scrollPos / 1200);
+                const contrastVal = 125 + (scrollPos / 10);
+                heroImg.style.transform = `scale(${scaleVal}) translateY(${scrollPos * 0.15}px)`;
+                heroImg.style.filter = `grayscale(100%) contrast(${contrastVal}%)`;
+            }
+        });
+    </script>
+</body>
+</html>
