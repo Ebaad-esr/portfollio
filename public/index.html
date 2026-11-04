@@ -1,0 +1,708 @@
+/**
+ * Node.js Express Web Application Server
+ * Serves the Academics & Photography Brutalist Canvas Portfolio Application
+ * 
+ * Usage:
+ * 1. npm install express
+ * 2. node server.js
+ * 3. Open http://localhost:3000 in your browser
+ */
+
+const express = require('express');
+const path = require('path');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Serve full HTML document dynamically on root GET request
+app.get('/', (req, res) => {
+    res.send(`<!DOCTYPE html>
+<html lang="en" id="html-root" class="dark bg-black text-white">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academics & Photography // Portfolios</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        accent: '#FF9800',
+                        accentHover: '#F57C00',
+                        bgBlack: '#000000',
+                        cardBlack: '#0a0a0a',
+                        borderGray: '#333333'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Force zero rounded corners everywhere for strict brutalist aesthetic */
+        *, ::before, ::after {
+            border-radius: 0px !important;
+        }
+        body {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        /* Dark / Light Mode custom overrides */
+        html.dark body {
+            background-color: #000000b3;
+            color: #ffffff;
+        }
+        html.light body {
+            background-color: #f4f4f4;
+            color: #111111;
+        }
+        html.light .bg-black {
+            background-color: #ffffff !important;
+        }
+        html.light .bg-cardBlack {
+            background-color: #f0f0f0 !important;
+        }
+        html.light .border-borderGray {
+            border-color: #cccccc !important;
+        }
+        html.light .text-gray-400 {
+            color: #000000 !important;
+        }
+        html.light .text-gray-300 {
+            color: #000000 !important;
+        }
+        html.light .text-gray-500 {
+            color: #000000 !important;
+        }
+        /* Custom Brutalist Reactive Cursor Highlight */
+        #brutalist-cursor {
+            pointer-events: none;
+            position: fixed;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.15s ease, height 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+        }
+        /* Dynamic Scroll Transform for Hero Background Image */
+        #hero-bg-img {
+            will-change: transform, filter, opacity;
+            transition: transform 0.001s ease-out, filter 0.01s ease-out;
+        }
+        /* Reveal on scroll animation trigger class */
+        .reveal-on-scroll {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-on-scroll.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Interactive Card Tilt & Glitch Effect */
+        .reactive-card {
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease;
+            will-change: transform;
+        }
+        .reactive-card:hover {
+            box-shadow: 6px 6px 0px 0px #FF9800;
+        }
+        /* CRT Scanline Overlay Styling */
+        .scanlines {
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0, 0, 0, 0.3) 50%,
+                rgba(0, 0, 0, 0.3)
+            );
+            background-size: 100% 4px;
+        }
+        /* 35mm Film Grain Simulation Overlay */
+        .film-grain {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+        }
+        @keyframes pulse-accent {
+            0%, 100% { border-color: #FF9800; }
+            50% { border-color: #ffffff; }
+        }
+        .pulse-border {
+            animation: pulse-accent 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col selection:bg-accent selection:text-black relative">
+
+    <!-- INTERACTIVE CUSTOM BRUTALIST CURSOR -->
+    <div id="brutalist-cursor" class="w-5 h-5 border-2 border-accent bg-accent/10 hidden md:block"></div>
+
+    <!-- CANVAS INTERACTIVE BACKGROUND LAYER -->
+    <canvas id="interactive-grid-canvas" class="fixed inset-0 pointer-events-none z-0 opacity-50"></canvas>
+    <div id="bg-overlay-effects" class="fixed inset-0 pointer-events-none z-0"></div>
+
+    <!-- GLOBAL LOADER COMPONENT -->
+    <div id="page-loader" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center border-4 border-accent transition-opacity duration-500 pointer-events-none opacity-0">
+        <div class="flex items-center space-x-3 mb-4">
+            <svg class="animate-spin h-8 w-8 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-accent font-bold tracking-widest text-lg font-mono">// INITIALIZING_SYSTEM_CORE...</span>
+        </div>
+        <div class="w-64 h-2 bg-borderGray overflow-hidden border border-borderGray">
+            <div class="h-full bg-accent animate-pulse w-full"></div>
+        </div>
+    </div>
+
+    <!-- TAB OR NAV BAR WITH SEARCH, DARK/LIGHT TOGGLE & HAMBURGER MENU -->
+    <nav class="sticky top-0 z-50 bg-black border-b border-borderGray px-4 sm:px-6 py-4 flex flex-wrap justify-between items-center">
+        <div class="flex items-center space-x-4">
+            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <span class="text-accent font-bold tracking-widest text-base sm:text-lg">PORTFOLLIO</span>
+            <span class="hidden xl:inline text-xs text-gray-400"> // ENGINEERING + PHOTOGRAPHY</span>
+        </div>
+
+        <!-- SEARCH FIELD COMPONENT -->
+        <div class="hidden lg:flex items-center relative my-2 lg:my-0">
+            <svg class="w-4 h-4 text-gray-400 absolute left-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="SEARCH ARCHIVE [ESP32, SPICE, OPTICS]..." class="bg-cardBlack border border-borderGray text-xs text-white pl-9 pr-4 py-2 w-64 focus:outline-none focus:border-accent font-mono placeholder-gray-500">
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <div class="hidden lg:flex items-center space-x-3 text-xs text-gray-400 font-mono pr-4 border-r border-borderGray">
+                <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">[ GH ]</a>
+                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">[ LI ]</a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">[ IG ]</a>
+            </div>
+
+            <div class="hidden sm:flex space-x-2">
+                <button onclick="switchView('academics')" id="nav-academics" class="px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-accent text-black border border-accent transition-colors">
+                    01 // Academics
+                </button>
+                <button onclick="switchView('photography')" id="nav-photography" class="px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-cardBlack text-gray-300 border border-borderGray hover:border-accent transition-colors">
+                    02 // Photography
+                </button>
+            </div>
+
+            <div class="hidden xl:flex items-center space-x-2 text-[10px] font-mono border-l border-borderGray pl-4">
+                <span class="text-gray-500">SYSTEM_FPS:</span>
+                <span id="fps-counter" class="text-accent font-bold">60</span>
+                <span class="text-gray-500 ml-2">INTERACTION_COUNT:</span>
+                <span id="click-counter" class="text-accent font-bold">0</span>
+            </div>
+
+            <button onclick="toggleTheme()" class="px-3 py-2 text-xs font-mono font-bold uppercase border border-borderGray bg-cardBlack hover:border-accent text-accent transition-colors flex items-center space-x-1" title="Toggle Theme">
+                <span id="theme-icon">☀️</span>
+                <span id="theme-text" class="hidden md:inline">[ LIGHT ]</span>
+            </button>
+
+            <button onclick="toggleMobileMenu()" class="sm:hidden px-3 py-2 bg-cardBlack text-accent border border-borderGray hover:border-accent focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+
+        <div id="mobile-menu" class="hidden w-full mt-4 pt-4 border-t border-borderGray flex flex-col space-y-3 sm:hidden">
+            <div class="flex space-x-2 w-full">
+                <button onclick="switchView('academics'); toggleMobileMenu();" class="flex-1 py-2 text-xs uppercase font-bold bg-accent text-black border border-accent">
+                    01 // Academics
+                </button>
+                <button onclick="switchView('photography'); toggleMobileMenu();" class="flex-1 py-2 text-xs uppercase font-bold bg-cardBlack text-gray-300 border border-borderGray">
+                    02 // Photography
+                </button>
+            </div>
+            <div class="relative w-full">
+                <input type="text" oninput="handleSearch(this.value)" placeholder="SEARCH ARCHIVE..." class="w-full bg-cardBlack border border-borderGray text-xs text-white px-3 py-2 focus:outline-none focus:border-accent font-mono">
+            </div>
+            <div class="flex justify-around text-xs font-mono text-gray-400 py-2 border-t border-borderGray">
+                <a href="https://github.com" target="_blank" class="hover:text-accent">[ GITHUB ]</a>
+                <a href="https://linkedin.com" target="_blank" class="hover:text-accent">[ LINKEDIN ]</a>
+                <a href="https://instagram.com" target="_blank" class="hover:text-accent">[ INSTAGRAM ]</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-grow">
+
+        <!-- VIEW 01: ACADEMICS & ENGINEERING -->
+        <section id="view-academics" class="block">
+            <!-- Hero Section -->
+            <header id="hero-header" class="relative min-h-[90vh] flex items-center border-b border-borderGray overflow-hidden bg-black py-16">
+                <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+                    <img id="hero-bg-img" src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=2000&q=80" alt="Engineering and Optics Background" class="w-full h-full object-cover opacity-55 filter grayscale contrast-125">
+                    <div id="hero-overlay-dark" class="absolute inset-0 bg-black/60 transition-opacity duration-300"></div>
+                    <div id="hero-overlay-gradient" class="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-accent/20 via-accent/10 to-transparent transition-opacity duration-300"></div>
+                    <div class="absolute inset-0 bg-[linear-gradient(to_right,#222_1px,transparent_1px),linear-gradient(to_bottom,#222_1px,transparent_1px)] bg-[size:3rem_3rem] opacity-20"></div>
+                </div>
+
+                <div class="max-w-7xl mx-auto px-6 relative z-10 w-full flex flex-col gap-12">
+                    <div class="max-w-4xl space-y-6">
+                        <div class="inline-block px-3 py-1 bg-accent text-black text-xs font-bold uppercase tracking-widest">
+                            SYS_STATUS: ONLINE // DUAL TRAIT: ENGINEERING + OPTICS
+                        </div>
+                        <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-none">
+                            ENGINEERING SYSTEMS & <span class="text-accent">VISUAL OPTICS.</span>
+                        </h1>
+                        <p class="text-gray-300 text-sm sm:text-base max-w-2xl leading-relaxed">
+                            Electronics Engineering student bridging rigorous analog circuit design, microcontroller code, and deliberate architectural photography through a strict brutalist lens.
+                        </p>
+                        <div class="flex flex-wrap gap-4 pt-4">
+                            <a href="#projects" class="px-6 py-3 bg-accent text-black font-bold text-xs uppercase tracking-wider hover:bg-accentHover transition-colors border border-accent">
+                                View Projects
+                            </a>
+                            <button onclick="switchView('photography')" class="px-6 py-3 bg-cardBlack text-white font-bold text-xs uppercase tracking-wider border border-borderGray hover:border-accent transition-colors">
+                                Explore Photography Archive &rarr;
+                            </button>
+                        </div>
+                    </div>
+                    <div class="border border-borderGray p-6 bg-cardBlack/95 backdrop-blur space-y-4 max-w-4xl w-full">
+                        <div class="relative w-full aspect-[16/10] sm:aspect-[21/10] border border-borderGray overflow-hidden group">
+                            <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1400&q=80" alt="Featured Hero Lens" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-700">
+                            <div class="absolute top-3 left-3 px-2.5 py-1 bg-black/90 text-[10px] text-accent font-mono border border-borderGray">
+                                // FEATURED_OPTICAL_FRAME_01
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row justify-between gap-2 text-xs text-gray-300 font-mono pt-3 border-t border-borderGray">
+                            <div><span class="text-gray-500">OPTICAL SETUP:</span> 35MM MANUAL f/2 PRIME LENS</div>
+                            <div><span class="text-gray-500">CORE TELEMETRY:</span> ANALOG CIRCUITRY & C++</div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Projects Section -->
+            <section id="projects" class="py-20 px-6 max-w-7xl mx-auto">
+                <div class="mb-12 border-b border-borderGray pb-4 flex justify-between items-end">
+                    <div>
+                        <span class="text-accent text-xs uppercase tracking-widest">// MODULE_01</span>
+                        <h2 class="text-2xl sm:text-3xl font-black uppercase mt-1">Selected Engineering Works & Architecture</h2>
+                    </div>
+                    <span class="text-xs text-gray-500 hidden sm:inline">[ 6 COMPREHENSIVE REPOSITORIES ]</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 searchable-container">
+                    <!-- Project 1 -->
+                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
+                                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" alt="Analog Signal Processor PCB" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ HARDWARE_PCB ]</div>
+                            </div>
+                            <div class="flex justify-between items-start pt-2">
+                                <span class="text-xs font-bold text-accent">[ 01 ]</span>
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">Hardware / Spice</span>
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">Analog Signal Processor & Active Filter Array</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Designed, simulated, and fabricated multi-stage active operational amplifier filters optimized for ultra-low noise precision sensor telemetry. Performed exhaustive frequency response analysis using SPICE models, mitigating thermal noise interference and stabilizing cutoff thresholds across varying environmental loads.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Target Bandwidth: 0.1Hz - 50kHz</div>
+                                <div>• Component Tolerance: ±1% Precision</div>
+                                <div>• Validation: Oscilloscope & Bode Plots</div>
+                                <div>• Topology: Multiple Feedback Butterworth</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
+                            <span class="text-gray-500">C++ / SPICE / Altium</span>
+                            <span class="text-accent">SOURCE_CODE &rarr;</span>
+                        </div>
+                    </article>
+
+                    <!-- Project 2 -->
+                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
+                                <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80" alt="KBC Interactive Engine Screen" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ REACT_ENGINE ]</div>
+                            </div>
+                            <div class="flex justify-between items-start pt-2">
+                                <span class="text-xs font-bold text-accent">[ 02 ]</span>
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">Interactive App</span>
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">KBC Interactive Trivia Engine & Quiz System</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Developed a fully responsive, high-performance web-based trivia application emulating complex broadcast quiz logic. Features real-time countdown timers, randomized question banks, interactive lifeline simulations, and persistent state management wrapped in a ruthless brutalist user interface.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Framework: React 18 / Hooks</div>
+                                <div>• Styling: Tailwind CSS Monolith</div>
+                                <div>• State Architecture: Reducer Pattern</div>
+                                <div>• Optimization: Zero-Lag Event Listeners</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
+                            <span class="text-gray-500">React / Tailwind</span>
+                            <span class="text-accent">LIVE_DEMO &rarr;</span>
+                        </div>
+                    </article>
+
+                    <!-- Project 3 -->
+                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
+                                <img src="https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=800&q=80" alt="Embedded Microcontroller Circuit" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ EMBEDDED_NODE ]</div>
+                            </div>
+                            <div class="flex justify-between items-start pt-2">
+                                <span class="text-xs font-bold text-accent">[ 03 ]</span>
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">Embedded System</span>
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">Microcontroller Telemetry & Wireless Node</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Engineered low-power sensor node firmware written in bare-metal C for autonomous environmental monitoring. Implemented SPI/I2C communication protocols to interface atmospheric sensors with low-power radio transceivers, achieving extended battery longevity and dependable packet delivery.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Architecture: ARM Cortex-M0+</div>
+                                <div>• Protocols: SPI, I2C, UART, RF</div>
+                                <div>• Power Profile: Ultra-Low Sleep</div>
+                                <div>• Firmware: Bare-Metal C / RTOS</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
+                            <span class="text-gray-500">Embedded C</span>
+                            <span class="text-accent">GITHUB &rarr;</span>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <!-- IoT & ESP Systems Section -->
+            <section id="iot-projects" class="py-20 px-6 max-w-7xl mx-auto border-t border-borderGray">
+                <div class="mb-12 border-b border-borderGray pb-4 flex justify-between items-end">
+                    <div>
+                        <span class="text-accent text-xs uppercase tracking-widest">// MODULE_01_B</span>
+                        <h2 class="text-2xl sm:text-3xl font-black uppercase mt-1">ESP8266 & ESP32 IoT Repositories</h2>
+                    </div>
+                    <span class="text-xs text-gray-500 hidden sm:inline">[ 3 EMBEDDED SYSTEMS ]</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 searchable-container">
+                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
+                                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" alt="ESP8266 Node Controller" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ ESP8266_HUB ]</div>
+                            </div>
+                            <div class="flex justify-between items-start pt-2">
+                                <span class="text-xs font-bold text-accent">[ 04 ]</span>
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">IoT / ESP8266</span>
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">ESP8266 Wi-Fi Automated Sensor Hub</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Built an autonomous IoT monitoring node using the ESP8266 Wi-Fi SoC integrated with DHT22 temperature/humidity sensors and light dependent resistors. Programmed using custom C++ firmware with captive portal Wi-Fi configuration and secure MQTT client publishing to cloud broker platforms.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Microcontroller: ESP8266 (NodeMCU)</div>
+                                <div>• Protocols: MQTT over TLS, HTTP</div>
+                                <div>• Sensors: DHT22, LDR, Soil Moisture</div>
+                                <div>• Firmware: C++ / Arduino Framework</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
+                            <span class="text-gray-500">ESP8266 / MQTT</span>
+                            <span class="text-accent">GITHUB &rarr;</span>
+                        </div>
+                    </article>
+
+                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
+                                <img src="https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&w=800&q=80" alt="ESP32 CAM Hardware Rig" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ ESP32_VISION ]</div>
+                            </div>
+                            <div class="flex justify-between items-start pt-2">
+                                <span class="text-xs font-bold text-accent">[ 05 ]</span>
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">ESP32 / Camera</span>
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">ESP32-CAM Wireless Vision & Stream Node</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Developed a low-cost, low-latency wireless surveillance and frame capture device powered by the dual-core ESP32-CAM module. Configured internal PSRAM frame buffers for high-resolution JPEG streaming over local Wi-Fi networks with embedded web server controls and motion detection frame differencing.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• SoC: ESP32-S with OV2640 Camera</div>
+                                <div>• Streaming: MJPEG over HTTP</div>
+                                <div>• Memory: 4MB PSRAM Buffer</div>
+                                <div>• Processing: Frame Differencing Motion Detection</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
+                            <span class="text-gray-500">ESP32-CAM / C++</span>
+                            <span class="text-accent">GITHUB &rarr;</span>
+                        </div>
+                    </article>
+
+                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
+                        <div class="space-y-4">
+                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
+                                <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80" alt="ESP32 Wireless Mesh Array" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ MESH_PROTOCOL ]</div>
+                            </div>
+                            <div class="flex justify-between items-start pt-2">
+                                <span class="text-xs font-bold text-accent">[ 06 ]</span>
+                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">Mesh / Home Auto</span>
+                            </div>
+                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">ESP32 Decentralized Mesh Home Automation</h3>
+                            <p class="text-xs text-gray-400 leading-relaxed">
+                                Engineered a self-healing wireless mesh network of multiple ESP32 nodes communicating via ESP-NOW protocols to control relay switches, lighting arrays, and HVAC triggers across multi-room environments without requiring central router connectivity.
+                            </p>
+                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
+                                <div>• Protocol: painlessMesh / ESP-NOW</div>
+                                <div>• Actuators: Solid-State Relays, PWM Dimming</div>
+                                <div>• Deployment: Multi-Node Distributed Array</div>
+                                <div>• Update Pipeline: Secure OTA Flashing</div>
+                            </div>
+                        </div>
+                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
+                            <span class="text-gray-500">ESP32 / Mesh Protocol</span>
+                            <span class="text-accent">GITHUB &rarr;</span>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <!-- COMMENT STREAM COMPONENT -->
+            <section id="comments-section" class="py-20 px-6 max-w-7xl mx-auto border-t border-borderGray">
+                <div class="mb-8 border-b border-borderGray pb-4">
+                    <span class="text-accent text-xs uppercase tracking-widest">// PEER_REVIEWS</span>
+                    <h2 class="text-2xl sm:text-3xl font-black uppercase mt-1">Interactive Telemetry & Comments</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <form onsubmit="postComment(event)" class="border border-borderGray bg-cardBlack p-6 space-y-4">
+                        <div class="text-xs text-accent font-bold">// ADD_PUBLIC_LOG</div>
+                        <input type="text" id="comment-author" required placeholder="IDENTIFIER [Name / Handle]..." class="w-full bg-black border border-borderGray p-3 text-xs text-white focus:outline-none focus:border-accent font-mono">
+                        <textarea id="comment-body" required rows="4" placeholder="TELEMETRY_LOG [Enter technical feedback or comments]..." class="w-full bg-black border border-borderGray p-3 text-xs text-white focus:outline-none focus:border-accent font-mono"></textarea>
+                        <button type="submit" class="px-6 py-3 bg-accent text-black font-bold text-xs uppercase tracking-wider hover:bg-accentHover">Submit Comment Log</button>
+                    </form>
+                    <div id="comments-feed" class="border border-borderGray bg-cardBlack p-6 space-y-4 max-h-96 overflow-y-auto font-mono text-xs">
+                        <div class="border-b border-borderGray pb-3">
+                            <div class="text-accent font-bold">[ SYSTEM_ADMIN // 2026-11-03 ]</div>
+                            <p class="text-gray-300 mt-1">Telemetry log operational. Terminal is open for public comments.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <!-- VIEW 02: PHOTOGRAPHY -->
+        <section id="view-photography" class="hidden">
+            <header class="relative py-24 border-b border-borderGray bg-black px-6">
+                <div class="max-w-7xl mx-auto space-y-4">
+                    <span class="text-accent text-xs uppercase tracking-widest">// MODULE_02_OPTICS</span>
+                    <h1 class="text-4xl sm:text-6xl font-black tracking-tight uppercase">Visual Frame Archive &mdash; 22 Optical Studies</h1>
+                    <p class="text-gray-400 text-sm sm:text-base max-w-2xl leading-relaxed">
+                        A curated archive of brutalist architectural lines, severe geometric framing, nocturnal light studies, and high-contrast monochrome captures executed through manual mechanical lenses and strict zone system metering.
+                    </p>
+                    <div class="pt-2">
+                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-4 py-2 bg-cardBlack text-accent border border-borderGray hover:border-accent text-xs font-mono uppercase tracking-wider transition-colors">
+                            [ VIEW FULL INSTAGRAM FEED &rarr; ]
+                        </a>
+                    </div>
+                </div>
+            </header>
+
+            <!-- INTERACTIVE CAROUSEL COMPONENT -->
+            <section class="py-12 px-6 max-w-7xl mx-auto border-b border-borderGray">
+                <div class="mb-6 flex justify-between items-center">
+                    <span class="text-accent text-xs font-bold tracking-widest">// FEATURED_SLIDESHOW_CAROUSEL</span>
+                    <div class="flex space-x-2">
+                        <button onclick="prevSlide()" class="px-3 py-1 bg-cardBlack text-accent border border-borderGray hover:border-accent text-xs font-mono">&larr; PREV</button>
+                        <button onclick="nextSlide()" class="px-3 py-1 bg-cardBlack text-accent border border-borderGray hover:border-accent text-xs font-mono">NEXT &rarr;</button>
+                    </div>
+                </div>
+                <div class="relative w-full h-[50vh] sm:h-[60vh] bg-black border border-borderGray overflow-hidden">
+                    <img id="carousel-img" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1600&q=80" alt="Carousel Slide" class="w-full h-full object-cover filter grayscale contrast-125 transition-all duration-500">
+                    <div class="absolute bottom-4 left-4 right-4 sm:right-auto px-3 py-1.5 bg-black/90 text-accent font-mono text-xs border border-borderGray" id="carousel-caption">
+                        [ SLIDE 1 / 3 ] BRUTALIST CONCRETE STRUCTURE I
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <!-- FOOTER SECTION -->
+    <footer id="contact" class="border-t border-borderGray bg-black py-16 px-6 mt-auto relative z-10">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div class="space-y-6">
+                <div>
+                    <span class="text-accent text-xs uppercase tracking-widest">// INITIATE_COMMUNICATION</span>
+                    <h2 class="text-3xl font-black uppercase mt-1">Let's Build Together</h2>
+                    <p class="text-xs text-gray-400 leading-relaxed mt-2">
+                        Available for engineering collaborations, hardware projects, or photography assignments. Reach out directly or connect via socials.
+                    </p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-cardBlack border border-borderGray hover:border-accent text-xs text-gray-300 hover:text-accent transition-colors font-mono">
+                        GITHUB // [ @username ]
+                    </a>
+                    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-cardBlack border border-borderGray hover:border-accent text-xs text-gray-300 hover:text-accent transition-colors font-mono">
+                        LINKEDIN // [ /in/username ]
+                    </a>
+                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-cardBlack border border-borderGray hover:border-accent text-xs text-gray-300 hover:text-accent transition-colors font-mono">
+                        INSTAGRAM // [ @handle ]
+                    </a>
+                </div>
+            </div>
+            <div class="border border-borderGray bg-cardBlack p-6 space-y-4">
+                <div class="text-xs text-accent uppercase tracking-widest">// DIRECT_CONTACT</div>
+                <div class="flex flex-col sm:flex-row gap-4 items-center">
+                    <input type="text" readonly value="contact@engineering-portfolio.dev" class="w-full bg-black border border-borderGray px-4 py-3 text-xs text-gray-300 focus:outline-none font-mono">
+                    <button onclick="copyEmail()" class="w-full sm:w-auto px-6 py-3 bg-accent text-black text-xs font-bold uppercase tracking-wider hover:bg-accentHover whitespace-nowrap">
+                        Copy Email
+                    </button>
+                </div>
+                <div id="copy-msg" class="text-[10px] text-accent hidden font-mono">STATUS: EMAIL COPIED TO CLIPBOARD</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- INTERACTIVE JAVASCRIPT SYSTEM ENGINE -->
+    <script>
+        const carouselSlides = [
+            { url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1600&q=80", title: "[ SLIDE 1 / 3 ] BRUTALIST CONCRETE STRUCTURE I" },
+            { url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80", title: "[ SLIDE 2 / 3 ] NOCTURNE LIGHT LINES II" },
+            { url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80", title: "[ SLIDE 3 / 3 ] OPTICAL SCHEMATIC MACRO III" }
+        ];
+        let currentSlide = 0;
+        function updateCarousel() {
+            const img = document.getElementById('carousel-img');
+            const cap = document.getElementById('carousel-caption');
+            if (img && cap) {
+                img.src = carouselSlides[currentSlide].url;
+                cap.innerText = carouselSlides[currentSlide].title;
+            }
+        }
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % carouselSlides.length;
+            updateCarousel();
+        }
+        function prevSlide() {
+            currentSlide = (currentSlide - 1 + carouselSlides.length) % carouselSlides.length;
+            updateCarousel();
+        }
+
+        function switchView(viewName) {
+            const academics = document.getElementById('view-academics');
+            const photography = document.getElementById('view-photography');
+            const btnA = document.getElementById('nav-academics');
+            const btnP = document.getElementById('nav-photography');
+
+            if (viewName === 'academics') {
+                academics.classList.remove('hidden');
+                photography.classList.add('hidden');
+                btnA.className = "px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-accent text-black border border-accent";
+                btnP.className = "px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-cardBlack text-gray-300 border border-borderGray";
+            } else {
+                academics.classList.add('hidden');
+                photography.classList.remove('hidden');
+                btnP.className = "px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-accent text-black border border-accent";
+                btnA.className = "px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-cardBlack text-gray-300 border border-borderGray";
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleTheme() {
+            const root = document.getElementById('html-root');
+            const isDark = root.classList.contains('dark');
+            const icon = document.getElementById('theme-icon');
+            const text = document.getElementById('theme-text');
+
+            if (isDark) {
+                root.classList.remove('dark');
+                root.classList.add('light');
+                icon.innerText = '🌙';
+                text.innerText = '[ DARK ]';
+            } else {
+                root.classList.remove('light');
+                root.classList.add('dark');
+                icon.innerText = '☀️';
+                text.innerText = '[ LIGHT ]';
+            }
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        // Interactive Canvas Particle Grid Script
+        (function initCanvasGrid() {
+            const canvas = document.getElementById('interactive-grid-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let mouseX = -1000, mouseY = -1000;
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            window.addEventListener('mousemove', (e) => {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+            });
+
+            function draw() {
+                ctx.clearRect(0, 0, width, height);
+                const gap = 40;
+                ctx.fillStyle = '#FF9800';
+
+                for (let x = 0; x < width; x += gap) {
+                    for (let y = 0; y < height; y += gap) {
+                        const dist = Math.hypot(x - mouseX, y - mouseY);
+                        const radius = dist < 120 ? Math.max(1, 4 - dist / 30) : 1;
+                        ctx.beginPath();
+                        ctx.arc(x, y, radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+
+        function copyEmail() {
+            const email = "contact@engineering-portfolio.dev";
+            const msg = document.getElementById('copy-msg');
+            const textArea = document.createElement("textarea");
+            textArea.value = email;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                msg.classList.remove('hidden');
+                setTimeout(() => msg.classList.add('hidden'), 3000);
+            } catch (err) {
+                console.error('Copy failed', err);
+            }
+            document.body.removeChild(textArea);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>`);
+});
+
+// Start listening on port
+app.listen(PORT, () => {
+    console.log(`[SYS_ONLINE] Node Server Running: http://localhost:${PORT}`);
+});
