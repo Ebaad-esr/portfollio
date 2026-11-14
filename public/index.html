@@ -1,708 +1,129 @@
-/**
- * Node.js Express Web Application Server
- * Serves the Academics & Photography Brutalist Canvas Portfolio Application
- * 
- * Usage:
- * 1. npm install express
- * 2. node server.js
- * 3. Open http://localhost:3000 in your browser
- */
-
-const express = require('express');
-const path = require('path');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-// Serve full HTML document dynamically on root GET request
-app.get('/', (req, res) => {
-    res.send(`<!DOCTYPE html>
-<html lang="en" id="html-root" class="dark bg-black text-white">
+<!doctype html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academics & Photography // Portfolios</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        accent: '#FF9800',
-                        accentHover: '#F57C00',
-                        bgBlack: '#000000',
-                        cardBlack: '#0a0a0a',
-                        borderGray: '#333333'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        /* Force zero rounded corners everywhere for strict brutalist aesthetic */
-        *, ::before, ::after {
-            border-radius: 0px !important;
-        }
-        body {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-        }
-        /* Dark / Light Mode custom overrides */
-        html.dark body {
-            background-color: #000000b3;
-            color: #ffffff;
-        }
-        html.light body {
-            background-color: #f4f4f4;
-            color: #111111;
-        }
-        html.light .bg-black {
-            background-color: #ffffff !important;
-        }
-        html.light .bg-cardBlack {
-            background-color: #f0f0f0 !important;
-        }
-        html.light .border-borderGray {
-            border-color: #cccccc !important;
-        }
-        html.light .text-gray-400 {
-            color: #000000 !important;
-        }
-        html.light .text-gray-300 {
-            color: #000000 !important;
-        }
-        html.light .text-gray-500 {
-            color: #000000 !important;
-        }
-        /* Custom Brutalist Reactive Cursor Highlight */
-        #brutalist-cursor {
-            pointer-events: none;
-            position: fixed;
-            z-index: 9999;
-            transform: translate(-50%, -50%);
-            transition: width 0.15s ease, height 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
-        }
-        /* Dynamic Scroll Transform for Hero Background Image */
-        #hero-bg-img {
-            will-change: transform, filter, opacity;
-            transition: transform 0.001s ease-out, filter 0.01s ease-out;
-        }
-        /* Reveal on scroll animation trigger class */
-        .reveal-on-scroll {
-            opacity: 0;
-            transform: translateY(24px);
-            transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .reveal-on-scroll.revealed {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        /* Interactive Card Tilt & Glitch Effect */
-        .reactive-card {
-            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease;
-            will-change: transform;
-        }
-        .reactive-card:hover {
-            box-shadow: 6px 6px 0px 0px #FF9800;
-        }
-        /* CRT Scanline Overlay Styling */
-        .scanlines {
-            background: linear-gradient(
-                to bottom,
-                rgba(255,255,255,0),
-                rgba(255,255,255,0) 50%,
-                rgba(0, 0, 0, 0.3) 50%,
-                rgba(0, 0, 0, 0.3)
-            );
-            background-size: 100% 4px;
-        }
-        /* 35mm Film Grain Simulation Overlay */
-        .film-grain {
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
-        }
-        @keyframes pulse-accent {
-            0%, 100% { border-color: #FF9800; }
-            50% { border-color: #ffffff; }
-        }
-        .pulse-border {
-            animation: pulse-accent 2s infinite;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Ebaad Rehman — engineering and photography portfolio.">
+<title>Ebaad Rehman — Portfolio</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: #10110f; }
+  #portfolio-frame {
+    display: block; width: 100%; height: 1px; min-height: 0;
+    border: 0; background: transparent; vertical-align: top;
+  }
+  #page-loader {
+    position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center;
+    background: #10110f; color: #f3f3eb; opacity: 1; visibility: visible;
+    transition: opacity .35s ease, visibility .35s ease;
+  }
+  #page-loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  #page-loader .loader-content { display:flex; flex-direction:column; align-items:center; gap:18px; }
+  #page-loader .loader-name { font: 900 clamp(30px,5vw,52px)/1 Manrope,Arial,sans-serif; letter-spacing:-.075em; }
+  #page-loader .loader-name span { color:#d7ff62; }
+  #page-loader .loader-track { width:150px; height:2px; background:#343a2b; overflow:hidden; }
+  #page-loader .loader-track:after { content:""; display:block; width:45%; height:100%; background:#d7ff62; animation:loader-progress 1s ease-in-out infinite; }
+  #page-loader .loader-label { color:#aeb8a2; font:11px "DM Mono",monospace; letter-spacing:.18em; text-transform:uppercase; }
+  @keyframes loader-progress { from { transform:translateX(-110%); } to { transform:translateX(340%); } }
+  @media(prefers-reduced-motion:reduce) { #page-loader .loader-track:after { animation:none; width:100%; } }
+</style>
 </head>
-<body class="bg-black text-white min-h-screen flex flex-col selection:bg-accent selection:text-black relative">
+<body>
+<div id="page-loader" role="status" aria-live="polite">
+  <div class="loader-content">
+    <div class="loader-name">EBAAD<span>.</span>REHMAN</div>
+    <div class="loader-track"></div>
+    <div class="loader-label">Loading portfolio</div>
+  </div>
+</div>
+<iframe id="portfolio-frame" title="Ebaad Rehman portfolio"></iframe>
+<script>
+(function () {
+  const frame = document.getElementById('portfolio-frame');
+  const pages = {
+    academics: "<!DOCTYPE html>\n<html lang=\"en\" data-theme=\"light\">\n<head>\n<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<meta name=\"description\" content=\"Ebaad Rehman — Electronics and Telecommunication Engineering portfolio.\">\n<title>Ebaad Rehman — Academics & Engineering<\/title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap\" rel=\"stylesheet\">\n<style>\n:root{--bg:#10110f;--surface:#191b17;--surface2:#22241e;--ink:#f3f3eb;--muted:#b5b8aa;--line:#3b3e34;--accent:#d7ff62;--accentText:#11130d;--nav:rgba(16,17,15,.9)}\n:root[data-theme=light]{--bg:#f5f5ef;--surface:#fff;--surface2:#e9ebe1;--ink:#171914;--muted:#62675b;--line:#d5d9cb;--accent:#557d12;--accentText:#fff;--nav:rgba(245,245,239,.92)}\n*{box-sizing:border-box}html,body{min-height:100%;}body{display:flex;flex-direction:column;min-height:100vh;}main{flex:1 0 auto;}footer.site-footer{flex:0 0 auto;margin-top:0;margin-bottom:0;}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;background:var(--bg);color:var(--ink);font:500 18px/1.8 Manrope,Arial,sans-serif;transition:background .3s,color .3s}a{color:inherit;text-decoration:none}button{font:inherit}.mono,.eyebrow,.tag,.num{font-family:\"DM Mono\",monospace}.wrap{width:min(1320px,calc(100% - 88px));margin:auto}\nheader{position:sticky;top:0;z-index:20;background:var(--nav);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}.nav{height:86px;display:flex;align-items:center;justify-content:space-between}.brand{font-size:clamp(25px,2.3vw,34px);font-weight:900;letter-spacing:-.075em;white-space:nowrap}.brand b{color:var(--accent)}.navlinks{display:flex;gap:10px;align-items:center}.navlinks a{font-size:15px;font-weight:700;padding:10px 16px;color:var(--muted);border:1px solid transparent}.navlinks a.active,.navlinks a:hover{color:var(--ink);border-color:var(--line)}.navlinks a.active{background:var(--surface2)}.tools{display:flex;gap:10px}.icon{width:46px;height:46px;border:1px solid var(--line);background:transparent;color:var(--ink);display:grid;place-items:center;cursor:pointer;border-radius:50%;font-size:20px}.icon:hover{border-color:var(--accent)}\n.hero{padding:120px 0 95px;border-bottom:1px solid var(--line);position:relative;overflow:hidden}.hero:after{content:\"\";position:absolute;width:430px;height:430px;border:1px solid var(--line);border-radius:50%;right:-70px;top:55px;box-shadow:0 0 0 70px transparent,0 0 0 71px var(--line),0 0 0 140px transparent,0 0 0 141px var(--line);opacity:.45}.hero-inner{position:relative;z-index:1;max-width:1000px}.eyebrow{font-size:14px;letter-spacing:.16em;color:var(--accent);text-transform:uppercase}.hero h1{font-size:clamp(68px,9vw,132px);line-height:.98;letter-spacing:-.085em;margin:28px 0 32px;font-weight:800}.hero h1 span{color:var(--accent)}.intro{font-size:clamp(19px,2vw,24px);line-height:1.8;color:var(--muted);max-width:780px}.buttons{display:flex;gap:14px;flex-wrap:wrap;margin-top:36px}.btn{display:inline-flex;align-items:center;gap:10px;padding:13px 19px;border:1px solid var(--line);font-size:15px;font-weight:800;transition:.25s}.btn:hover{transform:translateY(-3px);border-color:var(--accent)}.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accentText)}.scroll{margin-top:90px;font:13px \"DM Mono\",monospace;letter-spacing:.13em;color:var(--muted);text-transform:uppercase}.scroll:before{content:\"\";display:inline-block;width:55px;height:1px;background:var(--accent);vertical-align:middle;margin-right:15px}\nsection{padding:95px 0;border-bottom:1px solid var(--line)}.sectionhead{display:grid;grid-template-columns:190px 1fr;gap:40px;margin-bottom:42px}.num{font-size:14px;color:var(--accent);padding-top:10px}.sectionhead h2{font-size:clamp(44px,5.5vw,72px);letter-spacing:-.075em;line-height:1.05;margin:0;font-weight:800}.sectionhead p{font-size:18px;color:var(--muted);max-width:730px;margin:18px 0 0}.about{display:grid;grid-template-columns:1.15fr .85fr;gap:22px}.panel{background:var(--surface);border:1px solid var(--line);padding:34px}.panel p{margin:0;color:var(--muted);font-size:18px}.facts{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line)}.fact{background:var(--surface);padding:25px}.fact small{font:12px \"DM Mono\",monospace;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}.fact strong{display:block;font-size:22px;line-height:1.4;margin-top:10px}\n.projects{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.project{padding:34px;background:var(--surface);border:1px solid var(--line);min-height:330px;display:flex;flex-direction:column;transition:transform .35s,border-color .35s,box-shadow .35s}.project:hover{transform:translateY(-7px);border-color:var(--accent);box-shadow:0 22px 60px rgba(0,0,0,.18)}.projecttop{display:flex;justify-content:space-between}.tag{font-size:12px;letter-spacing:.13em;color:var(--accent);text-transform:uppercase}.project h3{font-size:clamp(26px,3vw,36px);line-height:1.18;letter-spacing:-.06em;margin:35px 0 15px}.project p{font-size:17px;color:var(--muted);margin:0 0 24px}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}.chips span{border:1px solid var(--line);padding:6px 10px;font:12px \"DM Mono\",monospace;color:var(--muted)}.plink{display:inline-block;color:var(--accent);font-size:15px;font-weight:800;margin-top:22px;width:max-content}\n.leaders{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.leader{background:var(--surface);border-top:3px solid var(--accent);padding:24px;min-height:205px}.leader h3{font-size:22px;line-height:1.35;letter-spacing:-.05em;margin:24px 0 10px}.leader p{font-size:15px;color:var(--muted);margin:0}.skills{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.skill{background:var(--surface);border:1px solid var(--line);padding:28px}.skill h3{font:13px \"DM Mono\",monospace;color:var(--accent);letter-spacing:.12em;text-transform:uppercase;margin:0 0 20px}.education{border-left:2px solid var(--accent);padding:5px 0 5px 30px}.education h3{font-size:30px;letter-spacing:-.06em;margin:0 0 8px}.education p{font-size:18px;color:var(--muted);margin:0}.contact{background:var(--accent);color:var(--accentText);padding:48px;display:flex;align-items:end;justify-content:space-between;gap:30px}.contact h2{font-size:clamp(42px,6vw,74px);letter-spacing:-.075em;line-height:1;margin:12px 0}.contact p{font-size:17px;max-width:620px}.contact .btn{border-color:var(--accentText)}.contact .btn:hover{background:var(--accentText);color:var(--accent)}footer{display:flex;justify-content:space-between;gap:20px;padding:32px 0 45px;color:var(--muted);font:12px \"DM Mono\",monospace;text-transform:uppercase;letter-spacing:.08em}\n.reveal{opacity:0;transform:translateY(28px);transition:opacity .8s,transform .8s}.reveal.visible{opacity:1;transform:none}\n@media(max-width:850px){.wrap{width:calc(100% - 48px)}.hero{padding:90px 0 75px}.hero:after{right:-250px}.sectionhead{grid-template-columns:1fr;gap:12px}.about{grid-template-columns:1fr}.leaders{grid-template-columns:repeat(2,1fr)}.skills{grid-template-columns:1fr}.navlinks a{padding:9px 10px;font-size:13px}}\n@media(max-width:560px){body{font-size:16px}.wrap{width:calc(100% - 34px)}.nav{height:auto;min-height:76px;gap:10px;flex-wrap:wrap;padding:12px 0}.brand{font-size:20px}.navlinks{order:3;width:100%;justify-content:space-between}.navlinks a{flex:1;text-align:center;font-size:12px;padding:9px 5px}.tools{margin-left:auto}.icon{width:40px;height:40px}.hero{padding:70px 0 58px}.hero h1{font-size:clamp(58px,15vw,84px)}.intro{font-size:18px}.scroll{margin-top:55px}section{padding:65px 0}.sectionhead h2{font-size:46px}.sectionhead p{font-size:16px}.panel{padding:23px}.panel p{font-size:16px}.facts{grid-template-columns:1fr 1fr}.fact{padding:18px}.fact strong{font-size:18px}.projects{grid-template-columns:1fr}.project{padding:25px;min-height:0}.project h3{font-size:28px}.project p{font-size:16px}.leaders{grid-template-columns:1fr 1fr}.leader{padding:18px;min-height:180px}.leader h3{font-size:18px}.skills{gap:12px}.skill{padding:22px}.education h3{font-size:25px}.education p{font-size:16px}.contact{padding:28px;display:block}.contact .btn{margin-top:14px}footer{flex-direction:column}}\n@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}.reveal{opacity:1;transform:none}}\n\n/* Interactive portfolio components */\n.menu-toggle{display:none}\n.extra-tools{display:flex;align-items:center;gap:9px}\n.searchbox{width:190px;max-width:26vw;padding:9px 12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:13px \"DM Mono\",monospace;outline:none}\n.searchbox:focus{border-color:var(--accent)}\n.menu-panel{display:none}\n.menu-panel.open{display:flex;position:absolute;right:4vw;top:76px;z-index:40;flex-direction:column;gap:5px;padding:14px;min-width:210px;background:var(--surface);border:1px solid var(--line);box-shadow:0 18px 45px #0002}\n.menu-panel a{padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px}\n.feature-band{padding:60px 0;border-bottom:1px solid var(--line)}\n.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}\n.feature-card{padding:25px;background:var(--surface);border:1px solid var(--line);min-height:170px}\n.feature-card .glyph{font-size:25px;color:var(--accent);display:block;margin-bottom:14px}\n.feature-card h3{font-size:19px;margin:0 0 8px;letter-spacing:-.04em}\n.feature-card p{margin:0;color:var(--muted);font-size:15px}\n.accordion{border-top:1px solid var(--line);margin-top:22px}\n.accordion details{border-bottom:1px solid var(--line);padding:17px 0}\n.accordion summary{cursor:pointer;font-weight:800;list-style:none;display:flex;justify-content:space-between;gap:20px}\n.accordion summary:after{content:\"+\";color:var(--accent);font-size:22px}\n.accordion details[open] summary:after{content:\"−\"}\n.accordion details p{color:var(--muted);margin:10px 0 0;font-size:16px}\n.tabbar{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}\n.tabbar button{border:1px solid var(--line);background:transparent;color:var(--muted);padding:9px 14px;cursor:pointer;font-size:13px}\n.tabbar button[aria-selected=true]{background:var(--accent);border-color:var(--accent);color:var(--accentText)}\n.tab-panel{padding:20px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}\n.carousel{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;margin-top:20px}\n.carousel-card{padding:25px;background:var(--surface);border:1px solid var(--line);min-height:150px}\n.carousel-card h3{margin:0 0 8px;font-size:21px}\n.carousel-card p{margin:0;color:var(--muted);font-size:15px}\n.carousel button,.small-action{border:1px solid var(--line);background:transparent;color:var(--ink);padding:10px 13px;cursor:pointer}\n.comment-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}\n.comment-form input,.comment-form textarea{width:100%;padding:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:14px Manrope}\n.comment-form textarea{grid-column:1/-1;min-height:90px;resize:vertical}\n.comment-form button{justify-self:start}\n.comment-list{display:grid;gap:10px;margin-top:18px}\n.comment-item{padding:14px 16px;background:var(--surface);border:1px solid var(--line)}\n.comment-item b{font-size:14px}.comment-item p{margin:5px 0 0;color:var(--muted);font-size:14px}\n.loader-screen{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;transition:opacity .4s,visibility .4s}\n.loader-screen.done{opacity:0;visibility:hidden;pointer-events:none}\n.loader-mark{width:42px;height:42px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}\n@keyframes spin{to{transform:rotate(360deg)}}\n.search-hit{outline:2px solid var(--accent);outline-offset:4px}\n.search-hidden{display:none!important}\n@media(max-width:850px){.feature-grid{grid-template-columns:1fr 1fr}.searchbox{max-width:32vw}}\n@media(max-width:620px){.menu-toggle{display:grid}.navlinks{display:none!important}.extra-tools{gap:6px}.searchbox{width:135px;max-width:38vw}.feature-grid{grid-template-columns:1fr}.comment-form{grid-template-columns:1fr}.comment-form textarea{grid-column:auto}.menu-panel.open{right:17px;top:65px}}\n\n\n/* Section colour system: coordinated tonal shifts, not unrelated colour blocks */\n:root{\n  --section-a: color-mix(in srgb, var(--bg) 94%, var(--accent) 6%);\n  --section-b: color-mix(in srgb, var(--bg) 90%, #7b9acb 10%);\n  --section-c: color-mix(in srgb, var(--bg) 91%, #b28acb 9%);\n  --section-d: color-mix(in srgb, var(--bg) 91%, #78b7a0 9%);\n  --section-e: color-mix(in srgb, var(--bg) 92%, #d5a36d 8%);\n}\n:root[data-theme=light]{\n  --section-a:#f5f5ef;\n  --section-b:#edf1f6;\n  --section-c:#f2edf5;\n  --section-d:#edf4ef;\n  --section-e:#f6f0e8;\n}\n:root[data-theme=dark]{\n  --section-a:#151712;\n  --section-b:#151a21;\n  --section-c:#1b1720;\n  --section-d:#14201c;\n  --section-e:#211b15;\n}\nmain > section, main > .feature-band, main > footer{\n  position:relative;\n  isolation:isolate;\n  transition:background-color .75s cubic-bezier(.2,.75,.25,1), color .45s ease;\n}\nmain > section:nth-of-type(5n+1), main > .feature-band:nth-of-type(5n+1){background:var(--section-a)}\nmain > section:nth-of-type(5n+2), main > .feature-band:nth-of-type(5n+2){background:var(--section-b)}\nmain > section:nth-of-type(5n+3), main > .feature-band:nth-of-type(5n+3){background:var(--section-c)}\nmain > section:nth-of-type(5n+4), main > .feature-band:nth-of-type(5n+4){background:var(--section-d)}\nmain > section:nth-of-type(5n), main > .feature-band:nth-of-type(5n){background:var(--section-e)}\n/* Soft top/bottom colour wash makes each section feel connected */\nmain > section:before, main > .feature-band:before{\n  content:\"\";position:absolute;inset:0;z-index:-1;pointer-events:none;\n  background:radial-gradient(ellipse at 88% 8%, color-mix(in srgb,var(--accent) 8%,transparent), transparent 42%);\n  opacity:.8;\n}\nmain > section + section, main > .feature-band + section, main > section + .feature-band{\n  border-top:1px solid color-mix(in srgb,var(--line) 72%,var(--accent) 28%);\n}\n/* Reveal-on-scroll with a gentle directional entrance */\n.motion-ready main > section .sectionhead,\n.motion-ready main > section .panel,\n.motion-ready main > section .project-card,\n.motion-ready main > section .feature-card,\n.motion-ready main > .feature-band .sectionhead,\n.motion-ready main > .feature-band .feature-card,\n.motion-ready main > .feature-band .accordion,\n.motion-ready main > .feature-band .tabbar,\n.motion-ready main > .feature-band .tab-panel,\n.motion-ready main > .feature-band .carousel,\n.motion-ready main > .feature-band #comments{\n  opacity:0;transform:translate3d(0,28px,0) scale(.985);\n  transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.16,1,.3,1);\n}\n.motion-ready .in-view{opacity:1!important;transform:translate3d(0,0,0) scale(1)!important}\n.motion-ready main > section .feature-card:nth-child(2),\n.motion-ready main > .feature-band .feature-card:nth-child(2){transition-delay:.08s}\n.motion-ready main > section .feature-card:nth-child(3),\n.motion-ready main > .feature-band .feature-card:nth-child(3){transition-delay:.16s}\nmain > section .panel, main > .feature-band .feature-card, .project-card{\n  transition:transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s ease, background-color .45s ease;\n}\nmain > section .panel:hover, main > .feature-band .feature-card:hover, .project-card:hover{\n  transform:translateY(-7px);\n  box-shadow:0 18px 42px color-mix(in srgb,var(--ink) 10%,transparent);\n}\n@media(prefers-reduced-motion:reduce){\n  *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}\n  .motion-ready main > section *, .motion-ready main > .feature-band *{opacity:1!important;transform:none!important}\n}\n\n\n\n\n/* Unified palette: Midnight navy + deep forest + warm champagne gold */\n:root[data-theme=\"dark\"]{\n  --bg:#0B1012;\n  --surface:#141B1C;\n  --surface2:#1C2827;\n  --ink:#F2F0E8;\n  --muted:#AAB5AF;\n  --line:#2B3935;\n  --accent:#D6B477;\n  --accentText:#151712;\n  --nav:rgba(11,16,18,.93);\n  --section-a:#111D2A; /* midnight navy */\n  --section-b:#14231F; /* deep forest */\n  --section-c:#19241F; /* moss charcoal */\n  --section-d:#17212A; /* blue slate */\n  --section-e:#20251F; /* forest graphite */\n  --footer-bg:#080D0E;\n  --footer-ink:#F2F0E8;\n  --footer-muted:#AAB5AF;\n  --signal:#A8B99A;\n}\n:root[data-theme=\"light\"]{\n  --bg:#F4F2EB;\n  --surface:#FFFFFF;\n  --surface2:#E9EEE8;\n  --ink:#1A211D;\n  --muted:#647068;\n  --line:#D5DDD5;\n  --accent:#87683B;\n  --accentText:#FFFFFF;\n  --nav:rgba(244,242,235,.95);\n  --section-a:#E8EDF1; /* pale blue-grey */\n  --section-b:#E8EEE8; /* soft forest */\n  --section-c:#EEF1E9; /* sage neutral */\n  --section-d:#E5EBED; /* cool slate */\n  --section-e:#F0EEE5; /* warm stone */\n  --footer-bg:#E4EAE3;\n  --footer-ink:#1A211D;\n  --footer-muted:#647068;\n  --signal:#58745A;\n}\n/* Coordinated section rotation */\nmain > section:nth-of-type(5n+1), main > .feature-band:nth-of-type(5n+1){background:var(--section-a)!important}\nmain > section:nth-of-type(5n+2), main > .feature-band:nth-of-type(5n+2){background:var(--section-b)!important}\nmain > section:nth-of-type(5n+3), main > .feature-band:nth-of-type(5n+3){background:var(--section-c)!important}\nmain > section:nth-of-type(5n+4), main > .feature-band:nth-of-type(5n+4){background:var(--section-d)!important}\nmain > section:nth-of-type(5n), main > .feature-band:nth-of-type(5n){background:var(--section-e)!important}\n.eyebrow,.num,.brand b,.footer-brand b{color:var(--accent)}\n.tag,.project-card .tag,.feature-card .glyph{color:var(--signal)}\n.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accentText)}\n.icon:hover,.btn:hover{border-color:var(--signal)}\nmain > section:before,main > .feature-band:before{\n  background:radial-gradient(ellipse at 88% 8%,rgba(214,180,119,.09),transparent 46%);\n}\n:root[data-theme=\"light\"] main > section:before,\n:root[data-theme=\"light\"] main > .feature-band:before{\n  background:radial-gradient(ellipse at 88% 8%,rgba(135,104,59,.06),transparent 46%);\n}\nfooter.site-footer{background:var(--footer-bg);color:var(--footer-ink)}\n.footer-bottom,.footer-description,.footer-note{color:var(--footer-muted)}\n\n\n/* Rich light mode: deeper slate, ink navy and forest tones */\n:root[data-theme=\"light\"]{\n  --bg:#E9E8E1;\n  --surface:#F7F6F0;\n  --surface2:#DCE2DC;\n  --ink:#18221F;\n  --muted:#58665F;\n  --line:#C5CEC6;\n  --accent:#76562F;\n  --accentText:#FFFFFF;\n  --nav:rgba(233,232,225,.96);\n  --section-a:#DCE3E8; /* blue-grey */\n  --section-b:#D7E0D9; /* forest sage */\n  --section-c:#E1E0D7; /* stone */\n  --section-d:#D3DDE0; /* slate */\n  --section-e:#D8DED3; /* muted olive */\n  --footer-bg:#17221F;\n  --footer-ink:#F1F0E8;\n  --footer-muted:#BAC5BD;\n  --signal:#49634F;\n}\n/* Keep surfaces distinct from section backgrounds */\n:root[data-theme=\"light\"] .panel,\n:root[data-theme=\"light\"] .feature-card,\n:root[data-theme=\"light\"] .project-card,\n:root[data-theme=\"light\"] .carousel-card,\n:root[data-theme=\"light\"] .tab-panel,\n:root[data-theme=\"light\"] .comment-item{\n  background:#F7F6F0;\n  border-color:#C5CEC6;\n  box-shadow:0 8px 24px rgba(23,35,30,.055);\n}\n:root[data-theme=\"light\"] .navlinks a.active,\n:root[data-theme=\"light\"] .navlinks a:hover{\n  background:#D6DED8;\n  border-color:#B8C5BA;\n  color:#18221F;\n}\n:root[data-theme=\"light\"] .icon,\n:root[data-theme=\"light\"] .searchbox,\n:root[data-theme=\"light\"] .comment-form input,\n:root[data-theme=\"light\"] .comment-form textarea{\n  background:#F7F6F0;\n  border-color:#BCC8BE;\n  color:#18221F;\n}\n:root[data-theme=\"light\"] main > section:before,\n:root[data-theme=\"light\"] main > .feature-band:before{\n  background:radial-gradient(ellipse at 88% 8%,rgba(54,82,67,.12),transparent 48%);\n}\n:root[data-theme=\"light\"] .footer-heading{color:#BAC5BD}\n:root[data-theme=\"light\"] .footer-links a{color:#F1F0E8}\n:root[data-theme=\"light\"] .footer-links a:hover{color:#D6B477}\n:root[data-theme=\"light\"] .footer-bottom,\n:root[data-theme=\"light\"] .footer-description,\n:root[data-theme=\"light\"] .footer-note{color:#BAC5BD}\n:root[data-theme=\"light\"] .tag{background:#E1E7DF;border-color:#C0CCC1;color:#405B48}\n:root[data-theme=\"light\"] .btn:not(.primary){background:rgba(247,246,240,.72);border-color:#AEBBB1;color:#25352D}\n\n\n/* Deeper dark mode: near-black midnight, deep forest and restrained gold */\n:root[data-theme=\"dark\"]{\n  --bg:#070B0D;\n  --surface:#0D1416;\n  --surface2:#121D1C;\n  --ink:#F0EFE8;\n  --muted:#9AA8A1;\n  --line:#202D2A;\n  --accent:#D6B477;\n  --accentText:#111512;\n  --nav:rgba(7,11,13,.96);\n  --section-a:#09121B;\n  --section-b:#0A1713;\n  --section-c:#101916;\n  --section-d:#0B151D;\n  --section-e:#111812;\n  --footer-bg:#050809;\n  --footer-ink:#F0EFE8;\n  --footer-muted:#9AA8A1;\n  --signal:#A8B99A;\n}\n:root[data-theme=\"dark\"] .panel,\n:root[data-theme=\"dark\"] .feature-card,\n:root[data-theme=\"dark\"] .project-card,\n:root[data-theme=\"dark\"] .carousel-card,\n:root[data-theme=\"dark\"] .tab-panel,\n:root[data-theme=\"dark\"] .comment-item{\n  background:#0D1416;\n  border-color:#26332F;\n  box-shadow:0 12px 32px rgba(0,0,0,.22);\n}\n:root[data-theme=\"dark\"] .navlinks a.active,\n:root[data-theme=\"dark\"] .navlinks a:hover{\n  background:#121D1C;\n  border-color:#34423B;\n}\n:root[data-theme=\"dark\"] .icon,\n:root[data-theme=\"dark\"] .searchbox,\n:root[data-theme=\"dark\"] .comment-form input,\n:root[data-theme=\"dark\"] .comment-form textarea{\n  background:#0B1214;\n  border-color:#293733;\n  color:#F0EFE8;\n}\n:root[data-theme=\"dark\"] main > section:before,\n:root[data-theme=\"dark\"] main > .feature-band:before{\n  background:radial-gradient(ellipse at 88% 8%,rgba(214,180,119,.055),transparent 46%);\n}\n:root[data-theme=\"dark\"] .tag{background:#111C19;border-color:#2B3A33;color:#B6C5A8}\n\n\n/* Restore the original vivid green highlight in the dark-mode hero heading. */\n:root[data-theme=\"dark\"] .hero h1 span{color:#D7FF62 !important;}\n\n/* Restored original single-colour theme: green accent, consistent section surfaces. */\n:root, :root[data-theme=\"dark\"] {\n  --bg:#10110f; --surface:#191b17; --surface2:#22241e; --ink:#f3f3eb;\n  --muted:#b5b8aa; --line:#3b3e34; --accent:#d7ff62; --accentText:#11130d;\n  --nav:rgba(16,17,15,.9); --signal:#d7ff62;\n  --section-a:var(--bg); --section-b:var(--bg); --section-c:var(--bg);\n  --section-d:var(--bg); --section-e:var(--bg); --footer-bg:var(--bg);\n  --footer-ink:var(--ink); --footer-muted:var(--muted);\n}\n:root[data-theme=\"light\"] {\n  --bg:#f5f5ef; --surface:#fff; --surface2:#e9ebe1; --ink:#171914;\n  --muted:#62675b; --line:#d5d9cb; --accent:#557d12; --accentText:#fff;\n  --nav:rgba(245,245,239,.92); --signal:#557d12;\n  --section-a:var(--bg); --section-b:var(--bg); --section-c:var(--bg);\n  --section-d:var(--bg); --section-e:var(--bg); --footer-bg:var(--bg);\n  --footer-ink:var(--ink); --footer-muted:var(--muted);\n}\nmain > section, main > .feature-band { background:var(--bg)!important; }\nmain > section:before, main > .feature-band:before { background:none!important; opacity:0!important; }\n.site-footer { background:var(--bg)!important; color:var(--muted)!important; }\n.site-footer * { --footer-bg:var(--bg); }\n\n\n/* Restore the original contrasting footer treatment */\n.site-footer{\n  background:#171B14!important;\n  color:#F3F3EB!important;\n  border-top:1px solid #343D2B;\n}\n.site-footer .footer-brand,\n.site-footer .footer-heading{color:#F3F3EB!important}\n.site-footer .footer-brand b,\n.site-footer a:hover{color:#D7FF62!important}\n.site-footer .footer-description,\n.site-footer .footer-note,\n.site-footer .footer-bottom{color:#B5B8AA!important}\n.site-footer .footer-links a{color:#D0D5C5!important}\n.site-footer .footer-links a:hover{color:#D7FF62!important}\n:root[data-theme=\"light\"] .site-footer{\n  background:#E3E8D8!important;\n  color:#171914!important;\n  border-top:1px solid #C7D0B7;\n}\n:root[data-theme=\"light\"] .site-footer .footer-brand,\n:root[data-theme=\"light\"] .site-footer .footer-heading{color:#171914!important}\n:root[data-theme=\"light\"] .site-footer .footer-brand b,\n:root[data-theme=\"light\"] .site-footer a:hover{color:#557D12!important}\n:root[data-theme=\"light\"] .site-footer .footer-description,\n:root[data-theme=\"light\"] .site-footer .footer-note,\n:root[data-theme=\"light\"] .site-footer .footer-bottom{color:#62675B!important}\n:root[data-theme=\"light\"] .site-footer .footer-links a{color:#343D2B!important}\n:root[data-theme=\"light\"] .site-footer .footer-links a:hover{color:#557D12!important}\n\n\n/* Footer card layout */\n.site-footer{\n  background:#171B14!important;\n  color:#F3F3EB!important;\n  border-top:1px solid #343D2B;\n  padding:54px 0 22px;\n}\n.site-footer .site-footer-inner{width:min(1320px,calc(100% - 88px));margin:0 auto}\n.site-footer .footer-top{\n  display:grid;\n  grid-template-columns:1.15fr 1fr 1fr;\n  gap:16px;\n  align-items:stretch;\n}\n.site-footer .footer-card{\n  min-width:0;\n  padding:27px;\n  background:#20271B;\n  border:1px solid #3A4630;\n  border-radius:14px;\n  box-shadow:0 14px 34px rgba(0,0,0,.16);\n}\n.site-footer .footer-brand-card{\n  background:#242D1D;\n  border-color:#56663B;\n  display:flex;\n  flex-direction:column;\n  align-items:flex-start;\n}\n.site-footer .footer-brand{\n  color:#F3F3EB!important;\n  font-size:30px;\n  font-weight:800;\n  letter-spacing:-.07em;\n  line-height:1;\n  margin:0 0 18px;\n}\n.site-footer .footer-brand b{color:#D7FF62!important}\n.site-footer .footer-description,.site-footer .footer-note{\n  color:#B5BDAA!important;\n  font-size:14px;\n  line-height:1.75;\n  margin:0;\n}\n.site-footer .footer-heading{\n  color:#D7FF62!important;\n  font:12px \"DM Mono\",monospace;\n  letter-spacing:.14em;\n  text-transform:uppercase;\n  margin:0 0 18px;\n}\n.site-footer .footer-links{display:flex;flex-direction:column;gap:11px}\n.site-footer .footer-links a{\n  color:#E0E5D8!important;\n  font-size:14px;\n  line-height:1.45;\n  width:fit-content;\n  transition:color .2s,transform .2s;\n}\n.site-footer .footer-links a:hover{\n  color:#D7FF62!important;\n  transform:translateX(3px);\n}\n.site-footer .footer-note{margin-top:19px;font-size:12px}\n.site-footer .footer-card-cta{\n  display:inline-flex;\n  gap:10px;\n  align-items:center;\n  margin-top:auto;\n  padding:10px 13px;\n  border:1px solid #64764A;\n  border-radius:7px;\n  color:#D7FF62!important;\n  font-size:13px;\n  font-weight:800;\n}\n.site-footer .footer-card-cta:hover{background:#303C25}\n.site-footer .footer-bottom{\n  display:flex;\n  justify-content:space-between;\n  align-items:center;\n  flex-wrap:wrap;\n  gap:14px;\n  margin-top:20px;\n  padding-top:20px;\n  border-top:1px solid #3A4630;\n  color:#AEB8A2!important;\n  font:11px \"DM Mono\",monospace;\n  letter-spacing:.06em;\n}\n:root[data-theme=\"light\"] .site-footer{\n  background:#171B14!important;\n  color:#F3F3EB!important;\n  border-top-color:#343D2B;\n}\n:root[data-theme=\"light\"] .site-footer .footer-card{\n  background:#20271B;\n  border-color:#3A4630;\n}\n:root[data-theme=\"light\"] .site-footer .footer-brand-card{\n  background:#242D1D;\n  border-color:#56663B;\n}\n:root[data-theme=\"light\"] .site-footer .footer-brand,\n:root[data-theme=\"light\"] .site-footer .footer-heading{color:#F3F3EB!important}\n:root[data-theme=\"light\"] .site-footer .footer-heading{color:#D7FF62!important}\n:root[data-theme=\"light\"] .site-footer .footer-brand b{color:#D7FF62!important}\n:root[data-theme=\"light\"] .site-footer .footer-description,\n:root[data-theme=\"light\"] .site-footer .footer-note{color:#B5BDAA!important}\n:root[data-theme=\"light\"] .site-footer .footer-links a{color:#E0E5D8!important}\n:root[data-theme=\"light\"] .site-footer .footer-links a:hover,\n:root[data-theme=\"light\"] .site-footer .footer-card-cta{color:#D7FF62!important}\n@media(max-width:850px){\n  .site-footer .footer-top{grid-template-columns:1fr 1fr}\n  .site-footer .footer-brand-card{grid-column:1/-1}\n}\n@media(max-width:560px){\n  .site-footer{padding:38px 0 18px}\n  .site-footer .site-footer-inner{width:calc(100% - 34px)}\n  .site-footer .footer-top{grid-template-columns:1fr}\n  .site-footer .footer-brand-card{grid-column:auto}\n  .site-footer .footer-card{padding:22px}\n  .site-footer .footer-bottom{flex-direction:column;align-items:flex-start}\n}\n\n\n.hero-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,420px);gap:44px;align-items:center;position:relative;z-index:1}\n.hero-inner{max-width:none}\n.hero-portrait{justify-self:end;width:min(100%,400px);height:auto;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}\n.hero-portrait:before{content:\"\";position:absolute;inset:12% 0 0;border:1px solid var(--line);border-radius:48% 48% 8px 8px;background:var(--surface);opacity:.7}\n.hero-portrait img{position:relative;z-index:1;width:100%;height:490px;object-fit:cover;object-position:center 25%;border-radius:48% 48% 8px 8px;mask-image:linear-gradient(to bottom,#000 78%,transparent 100%);filter:grayscale(100%) contrast(1.05)}\n.hero-name{position:relative;z-index:2;margin:0;text-align:center;font-size:clamp(38px,5vw,62px);line-height:1;letter-spacing:-.075em;font-weight:900;color:var(--ink);white-space:nowrap}.hero-name:after{content:\".\";color:var(--accent)}\n@media(max-width:850px){.hero-layout{grid-template-columns:1fr;gap:30px}.hero-portrait{width:min(82%,380px);justify-self:center}.hero-portrait img{height:460px}.hero{padding:80px 0 65px}}\n@media(max-width:560px){.brand{font-size:21px}.hero-portrait{width:min(88%,340px)}.hero-portrait img{height:390px}.hero-name{font-size:clamp(34px,9vw,48px)}}\n\n<\/style><\/head><body>\n<header><div class=\"wrap nav\"><a class=\"brand\" href=\"academics.html\">EBAAD<b>.<\/b>REHMAN<\/a><nav class=\"navlinks\"><a class=\"active\" href=\"academics.html\">Academics<\/a><a href=\"photography.html\">Photography<\/a><\/nav><div class=\"extra-tools\">\n      <input class=\"searchbox\" id=\"siteSearch\" type=\"search\" placeholder=\"Search this page…\" aria-label=\"Search this page\">\n      <div class=\"tools\"><button class=\"icon\" id=\"theme\" aria-label=\"Toggle light and dark theme\" title=\"Toggle light/dark\">◐<\/button>\n      <button class=\"icon menu-toggle\" id=\"menuToggle\" aria-label=\"Open navigation menu\" aria-expanded=\"false\">☰<\/button><\/div>\n    <\/div>\n    <nav class=\"menu-panel\" id=\"menuPanel\" aria-label=\"Quick navigation\">\n      <a href=\"academics.html\">Academics & engineering<\/a><a href=\"photography.html\">Photography<\/a>\n      <a href=\"#about\">About<\/a><a href=\"#interactive\">Explore more<\/a><a href=\"#comments\">Comments<\/a>\n    <\/nav><\/div><\/header>\n<main>\n<div class=\"hero\"><div class=\"wrap hero-layout\"><div class=\"hero-inner\"><div class=\"eyebrow reveal\">Ebaad Rehman · Electronics · Embedded systems · Software<\/div><h1 class=\"reveal\">Engineering<br>with <span>intent.<\/span><\/h1><p class=\"intro reveal\">I’m Ebaad Rehman, a third-year Electronics &amp; Telecommunication Engineering student at SSGMCE, Shegaon. I work across embedded systems, microcontrollers, electronics and software development — turning curiosity into practical builds.<\/p><div class=\"buttons reveal\"><a class=\"btn primary\" href=\"#projects\">Explore my work ↘<\/a><a class=\"btn\" href=\"photography.html\">View photography ↗<\/a><a class=\"btn\" href=\"https://github.com/Ebaad-esr\" target=\"_blank\" rel=\"noopener\">GitHub ↗<\/a><\/div><div class=\"scroll reveal\">Scroll to explore<\/div><\/div><div class=\"hero-portrait\"><img src=\"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1100&q=90\" alt=\"Temporary portrait placeholder — replace with Ebaad’s photo\"><h2 class=\"hero-name\">EBAAD REHMAN<\/h2><\/div><\/div><\/div>\n<section id=\"about\"><div class=\"wrap\"><div class=\"sectionhead reveal\"><div class=\"num\">01 / ABOUT<\/div><div><h2>Curiosity becomes<br>something tangible.<\/h2><p>A practical-minded engineering student interested in how systems work — from a circuit on a bench to the software that brings it to life.<\/p><\/div><\/div><div class=\"about\"><article class=\"panel reveal\"><p>My work centres on embedded electronics, microcontroller-based systems, sensor interfacing, wireless communication and software. I enjoy taking an idea through experimentation and debugging, then refining it into a working build. Photography gives me another way to observe detail, light and composition.<\/p><\/article><div class=\"facts reveal\"><div class=\"fact\"><small>Degree<\/small><strong>B.E. · ENTC<\/strong><\/div><div class=\"fact\"><small>Institution<\/small><strong>SSGMCE<\/strong><\/div><div class=\"fact\"><small>Current year<\/small><strong>Third year<\/strong><\/div><div class=\"fact\"><small>Based in<\/small><strong>Shegaon, India<\/strong><\/div><\/div><\/div><\/div><\/section>\n<section id=\"projects\"><div class=\"wrap\"><div class=\"sectionhead reveal\"><div class=\"num\">02 / SELECTED WORK<\/div><div><h2>Hardware meets<br>software.<\/h2><p>Academic and personal builds across embedded systems, wireless electronics, signal processing and web development.<\/p><\/div><\/div><div class=\"projects\">\n<article class=\"project reveal\"><div class=\"projecttop\"><span class=\"tag\">Web application<\/span><span class=\"num\">P — 01<\/span><\/div><h3>QuizCraft<\/h3><p>A web-based quiz application developed as a software project and deployed on Railway, with a public application and source repository.<\/p><div class=\"chips\"><span>Web development<\/span><span>JavaScript<\/span><span>Deployment<\/span><\/div><a class=\"plink\" href=\"https://quiz-craft.up.railway.app\" target=\"_blank\" rel=\"noopener\">Open live application ↗<\/a><a class=\"plink\" href=\"https://github.com/Ebaad-esr/QuizCraft\" target=\"_blank\" rel=\"noopener\">Source code ↗<\/a><\/article>\n<article class=\"project reveal\"><div class=\"projecttop\"><span class=\"tag\">Embedded audio<\/span><span class=\"num\">P — 02<\/span><\/div><h3>ESP32 Bluetooth Audio Player<\/h3><p>An SD-card audio player using ESP32 to read MP3 files, decode audio and stream to Bluetooth earbuds through A2DP. Work includes decoder stability, buffering and sample-rate handling.<\/p><div class=\"chips\"><span>ESP32<\/span><span>C++<\/span><span>microSD<\/span><span>MP3<\/span><span>A2DP<\/span><\/div><\/article>\n<article class=\"project reveal\"><div class=\"projecttop\"><span class=\"tag\">DSP · Sensor interface<\/span><span class=\"num\">P — 03<\/span><\/div><h3>MAX30102 Signal Processing<\/h3><p>An academic DSP project using the MAX30102 optical sensor with ESP32. Sensor data is processed on the microcontroller and displayed through an offline web interface with a timed measurement flow.<\/p><div class=\"chips\"><span>ESP32<\/span><span>MAX30102<\/span><span>DSP<\/span><span>I²C<\/span><\/div><\/article>\n<article class=\"project reveal\"><div class=\"projecttop\"><span class=\"tag\">Wireless electronics<\/span><span class=\"num\">P — 04<\/span><\/div><h3>8-Channel Wireless Controller<\/h3><p>A multi-channel wireless control project built around Arduino Nano boards and nRF24L01 radio modules, exploring transmitter–receiver communication and control signals.<\/p><div class=\"chips\"><span>Arduino Nano<\/span><span>nRF24L01<\/span><span>RF<\/span><span>C++<\/span><\/div><\/article>\n<article class=\"project reveal\"><div class=\"projecttop\"><span class=\"tag\">Electronics design<\/span><span class=\"num\">P — 05<\/span><\/div><h3>PCB &amp; Circuit Design<\/h3><p>Practical exploration of circuit design, component selection, schematic capture and PCB layout workflows, including single-sided board planning.<\/p><div class=\"chips\"><span>KiCad<\/span><span>Schematic design<\/span><span>PCB layout<\/span><\/div><\/article>\n<article class=\"project reveal\"><div class=\"projecttop\"><span class=\"tag\">Prototyping<\/span><span class=\"num\">P — 06<\/span><\/div><h3>Microcontroller Experiments<\/h3><p>Hands-on work with ESP32, ESP8266 and Arduino platforms: sensor interfacing, I²C/SPI communication, displays, wireless modules and hardware debugging.<\/p><div class=\"chips\"><span>ESP32<\/span><span>ESP8266<\/span><span>Arduino<\/span><span>I²C / SPI<\/span><\/div><\/article>\n<\/div><\/div><\/section>\n<section id=\"leadership\"><div class=\"wrap\"><div class=\"sectionhead reveal\"><div class=\"num\">03 / LEADERSHIP<\/div><div><h2>Building with<br>people, too.<\/h2><p>Technical leadership and event-team involvement at SSGMCE.<\/p><\/div><\/div><div class=\"leaders\"><article class=\"leader reveal\"><div class=\"tag\">Technical leadership<\/div><h3>Technical Head<br>ISTE SSGMCE<\/h3><p>Student chapter leadership.<\/p><\/article><article class=\"leader reveal\"><div class=\"tag\">Technical leadership<\/div><h3>Technical Head<br>Mozilla SSGMCE<\/h3><p>Campus technical community.<\/p><\/article><article class=\"leader reveal\"><div class=\"tag\">Event team<\/div><h3>Innovo SSGMCE<br>2K25<\/h3><p>Technical team member.<\/p><\/article><article class=\"leader reveal\"><div class=\"tag\">Event team<\/div><h3>Navonmesh SSGMCE<br>2026<\/h3><p>Technical team member.<\/p><\/article><\/div><\/div><\/section>\n<section id=\"skills\"><div class=\"wrap\"><div class=\"sectionhead reveal\"><div class=\"num\">04 / TOOLKIT<\/div><div><h2>Tools of the trade.<\/h2><p>Technologies and tools used across coursework, experiments and personal projects.<\/p><\/div><\/div><div class=\"skills\"><article class=\"skill reveal\"><h3>Programming<\/h3><div class=\"chips\"><span>C / C++<\/span><span>Python<\/span><span>JavaScript<\/span><span>HTML / CSS<\/span><\/div><\/article><article class=\"skill reveal\"><h3>Hardware<\/h3><div class=\"chips\"><span>ESP32<\/span><span>ESP8266<\/span><span>Arduino<\/span><span>nRF24L01<\/span><span>I²C<\/span><span>SPI<\/span><span>Sensors<\/span><span>PCB basics<\/span><\/div><\/article><article class=\"skill reveal\"><h3>Tools &amp; workflow<\/h3><div class=\"chips\"><span>Git / GitHub<\/span><span>VS Code<\/span><span>Arduino IDE<\/span><span>KiCad<\/span><span>Ubuntu<\/span><span>Lightroom<\/span><\/div><\/article><\/div><\/div><\/section>\n<section id=\"education\"><div class=\"wrap\"><div class=\"sectionhead reveal\"><div class=\"num\">05 / EDUCATION<\/div><div><h2>Learning by<br>building.<\/h2><p>Current academic background.<\/p><\/div><\/div><div class=\"education reveal\"><div class=\"eyebrow\">Current studies<\/div><h3>Bachelor of Engineering — Electronics &amp; Telecommunication<\/h3><p>Shri Sant Gajanan Maharaj College of Engineering (SSGMCE), Shegaon · Third year<\/p><p style=\"margin-top:15px;color:var(--muted)\">CGPA, semester-wise grades and verified certificates can be added when exact details are available.<\/p><\/div><\/div><\/section>\n<section><div class=\"wrap\"><div class=\"contact reveal\"><div><div class=\"eyebrow\">Continue exploring<\/div><h2>Engineering is one side.<br>Photography is the other.<\/h2><p>Visit the separate photography portfolio for selected frames and visual work.<\/p><\/div><a class=\"btn\" href=\"photography.html\">Enter photography ↗<\/a><\/div><\/div><\/section>\n\n<section class=\"feature-band\" id=\"interactive\"><div class=\"wrap\">\n  <div class=\"sectionhead\"><div class=\"num\">06 / EXTRA<\/div><div><h2>Beyond the circuit.<\/h2><p>A few more details about the person behind the projects—creative interests alongside the engineering work.<\/p><\/div><\/div>\n  <div class=\"feature-grid\">\n    <article class=\"feature-card\"><span class=\"glyph\">⌁<\/span><h3>Two-wheel perspective<\/h3><p>I enjoy motovlogging and developing ride-focused content under the EBAAD RIDES identity.<\/p><\/article>\n    <article class=\"feature-card\"><span class=\"glyph\">◎<\/span><h3>Visual storytelling<\/h3><p>Photography is a creative outlet: observing light, colour, framing and small details.<\/p><\/article>\n    <article class=\"feature-card\"><span class=\"glyph\">⌘<\/span><h3>Build, test, repeat<\/h3><p>From Arduino and ESP32 prototypes to PCB layouts, I like learning by making and debugging.<\/p><\/article>\n  <\/div>\n  <div class=\"tabbar\" role=\"tablist\" aria-label=\"More about Ebaad\">\n    <button role=\"tab\" aria-selected=\"true\" data-tab=\"tab-engineering\">Engineering<\/button>\n    <button role=\"tab\" aria-selected=\"false\" data-tab=\"tab-creative\">Creative side<\/button>\n    <button role=\"tab\" aria-selected=\"false\" data-tab=\"tab-community\">Community<\/button>\n  <\/div>\n  <div class=\"tab-panel\" id=\"tab-engineering\" role=\"tabpanel\">Interested in embedded systems, microcontrollers, wireless communication, audio electronics, sensor interfacing and practical PCB design.<\/div>\n  <div class=\"tab-panel\" id=\"tab-creative\" role=\"tabpanel\" hidden>Interested in photography, motovlogging, visual design and presenting technical ideas clearly.<\/div>\n  <div class=\"tab-panel\" id=\"tab-community\" role=\"tabpanel\" hidden>Have contributed to technical teams and student activities at SSGMCE, including Innovo and Navonmesh, and technical leadership in ISTE and Mozilla student communities.<\/div>\n  <div class=\"sectionhead\" style=\"margin-top:52px\"><div class=\"num\">QUICK FAQ<\/div><div><h2>Small details.<\/h2><p>Expandable notes about my interests and working style.<\/p><\/div><\/div>\n  <div class=\"accordion\">\n    <details><summary>What kind of projects do I enjoy?<\/summary><p>Hands-on electronics projects that combine hardware, firmware and a useful interface—especially ESP32, Arduino, sensors, wireless links and audio.<\/p><\/details>\n    <details><summary>What tools have I explored?<\/summary><p>Arduino IDE, KiCad, C/C++, Python, JavaScript and web technologies, along with practical debugging using serial output and test circuits.<\/p><\/details>\n    <details><summary>What do I enjoy outside coursework?<\/summary><p>Photography, motorcycle content, creative design and helping organise student technical events.<\/p><\/details>\n  <\/div>\n  <div class=\"sectionhead\" style=\"margin-top:52px\"><div class=\"num\">LINKS<\/div><div><h2>Find my work.<\/h2><p>Useful starting points and project links.<\/p>\n    <ul style=\"padding-left:20px;color:var(--muted);font-size:16px;line-height:2.2\">\n      <li><a href=\"https://github.com/Ebaad-esr\" target=\"_blank\" rel=\"noreferrer\">↗ GitHub profile<\/a><\/li>\n      <li><a href=\"https://github.com/Ebaad-esr/QuizCraft\" target=\"_blank\" rel=\"noreferrer\">↗ QuizCraft repository<\/a><\/li>\n      <li><a href=\"https://quiz-craft.up.railway.app\" target=\"_blank\" rel=\"noreferrer\">↗ QuizCraft live demo<\/a><\/li>\n    <\/ul>\n  <\/div><\/div>\n  <div class=\"sectionhead\" style=\"margin-top:52px\"><div class=\"num\">COMMENTS<\/div><div><h2>Leave a note.<\/h2><p>Comments are saved only in this browser on this device. They are not sent to a server.<\/p>\n    <div id=\"comments\"><form class=\"comment-form\" id=\"commentForm\"><input id=\"commentName\" maxlength=\"40\" placeholder=\"Your name\" aria-label=\"Your name\" required><input id=\"commentTopic\" maxlength=\"60\" placeholder=\"Topic (optional)\" aria-label=\"Topic\"><textarea id=\"commentText\" maxlength=\"500\" placeholder=\"Write a comment…\" aria-label=\"Comment\" required><\/textarea><button class=\"btn primary\" type=\"submit\">Post comment ↗<\/button><\/form><div class=\"comment-list\" id=\"commentList\" aria-live=\"polite\"><\/div><\/div>\n  <\/div><\/div>\n<\/div><\/section>\n\n<\/main><footer class=\"site-footer\">\n  <div class=\"site-footer-inner wrap\">\n    <div class=\"footer-top\">\n      <section class=\"footer-card footer-brand-card\" aria-label=\"About Ebaad\">\n        <p class=\"footer-brand\">EBAAD<b>.<\/b><\/p>\n        <p class=\"footer-description\">Electronics and Telecommunication Engineering student exploring embedded systems, electronics, software and practical builds.<\/p>\n        <a class=\"footer-card-cta\" href=\"https://github.com/Ebaad-esr\" target=\"_blank\" rel=\"noopener noreferrer\">Visit GitHub profile <span aria-hidden=\"true\">↗<\/span><\/a>\n      <\/section>\n      <section class=\"footer-card\" aria-label=\"Explore portfolio\">\n        <p class=\"footer-heading\">Explore<\/p>\n        <nav class=\"footer-links\" aria-label=\"Footer navigation\">\n          <a href=\"#about\">Academics &amp; projects ↗<\/a>\n          <a href=\"#skills\">Technical skills ↗<\/a>\n          <a href=\"photography.html\">Photography ↗<\/a>\n          <a href=\"https://github.com/Ebaad-esr\" target=\"_blank\" rel=\"noopener noreferrer\">GitHub profile ↗<\/a>\n          <a href=\"https://quiz-craft.up.railway.app\" target=\"_blank\" rel=\"noopener noreferrer\">QuizCraft live demo ↗<\/a>\n        <\/nav>\n      <\/section>\n      <section class=\"footer-card\" aria-label=\"Website information and contact\">\n        <p class=\"footer-heading\">About this website<\/p>\n        <div class=\"footer-links\">\n          <a href=\"https://github.com/Ebaad-esr\" target=\"_blank\" rel=\"noopener noreferrer\">Contact via GitHub ↗<\/a>\n          <a href=\"#comments\">Comments<\/a>\n          <a href=\"#top\">Back to top ↑<\/a>\n        <\/div>\n        <p class=\"footer-note\">Comments and gallery selections are handled locally in your browser; this site does not submit them to a server.<\/p>\n      <\/section>\n    <\/div>\n    <div class=\"footer-bottom\">\n      <span>© <span id=\"year\"><\/span> Ebaad Rehman. All rights reserved.<\/span>\n      <span>Engineering · Embedded systems · Projects<\/span>\n      <a href=\"#top\">Back to top ↑<\/a>\n    <\/div>\n  <\/div>\n<\/footer>\n<script>\n(()=>{const root=document.documentElement,btn=document.getElementById('theme');const saved=localStorage.getItem('ebaad-theme-v2');if(saved==='light'||saved==='dark')root.dataset.theme=saved;btn.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';localStorage.setItem('ebaad-theme-v2',root.dataset.theme)});document.getElementById('year').textContent=new Date().getFullYear();const els=document.querySelectorAll('.reveal');if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&'IntersectionObserver'in window){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target)}}),{threshold:.12});els.forEach(e=>io.observe(e))}else els.forEach(e=>e.classList.add('visible'))})();\n\n// Responsive hamburger navigation\nconst menuToggle=document.getElementById('menuToggle'),menuPanel=document.getElementById('menuPanel');\nif(menuToggle&&menuPanel){menuToggle.addEventListener('click',()=>{const open=menuPanel.classList.toggle('open');menuToggle.setAttribute('aria-expanded',String(open));menuToggle.textContent=open?'×':'☰'});menuPanel.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{menuPanel.classList.remove('open');menuToggle.setAttribute('aria-expanded','false');menuToggle.textContent='☰'}));}\n// Search across visible page text; filters matching sections/cards and scrolls to the first match.\nconst search=document.getElementById('siteSearch');\nif(search){search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();document.querySelectorAll('main section, .feature-card, .tile').forEach(el=>{el.classList.remove('search-hidden','search-hit');if(q&&!el.textContent.toLowerCase().includes(q))el.classList.add('search-hidden')});if(q){const hit=document.querySelector('main section:not(.search-hidden),.feature-card:not(.search-hidden),.tile:not(.search-hidden)');if(hit)hit.classList.add('search-hit')} });search.addEventListener('keydown',e=>{if(e.key==='Escape'){search.value='';search.dispatchEvent(new Event('input'))}});}\n// Tabs\ndocument.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b===btn)));document.querySelectorAll('[role=tabpanel]').forEach(p=>p.hidden=p.id!==btn.dataset.tab)}));\n// Local-only comments\nconst form=document.getElementById('commentForm'),list=document.getElementById('commentList');\nif(form&&list){const key='ebaad-portfolio-comments-v1';let entries=[];try{entries=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){entries=[]}function renderComments(){list.innerHTML='';entries.slice(-12).reverse().forEach(item=>{const card=document.createElement('article');card.className='comment-item';const name=document.createElement('b');name.textContent=item.name+(item.topic?' · '+item.topic:'');const body=document.createElement('p');body.textContent=item.text;card.append(name,body);list.append(card)})}renderComments();form.addEventListener('submit',e=>{e.preventDefault();entries.push({name:document.getElementById('commentName').value.trim(),topic:document.getElementById('commentTopic').value.trim(),text:document.getElementById('commentText').value.trim()});localStorage.setItem(key,JSON.stringify(entries));form.reset();renderComments()})}\n// Photography carousel\nconst slides=[['Light & shadow','How contrast and direction of light change the feeling of a frame.'],['Colour','Notice how a small palette can give an image a consistent mood.'],['Perspective','Change your position and discover a different composition.'],['Details','Textures and small everyday details can become the main subject.']];\nlet slideIndex=0;function showSlide(){const t=document.getElementById('slideTitle'),d=document.getElementById('slideText'),c=document.getElementById('slideCount');if(t&&d&&c){t.textContent=slides[slideIndex][0];d.textContent=slides[slideIndex][1];c.textContent=String(slideIndex+1).padStart(2,'0')+' / '+String(slides.length).padStart(2,'0')}}const cp=document.getElementById('carouselPrev'),cn=document.getElementById('carouselNext');if(cp&&cn){cp.onclick=()=>{slideIndex=(slideIndex+slides.length-1)%slides.length;showSlide()};cn.onclick=()=>{slideIndex=(slideIndex+1)%slides.length;showSlide()};showSlide()}\n// Brief page loader\nconst loader=document.createElement('div');loader.className='loader-screen';loader.setAttribute('aria-label','Loading portfolio');loader.innerHTML='<div class=\"loader-mark\" role=\"status\" aria-label=\"Loading\"><\/div>';document.body.append(loader);window.addEventListener('load',()=>setTimeout(()=>loader.classList.add('done'),220));setTimeout(()=>loader.classList.add('done'),1200);\n\n\n// Scroll reveal for section content; respects reduced-motion preferences.\nif(!window.matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window){\n  document.documentElement.classList.add('motion-ready');\n  const motionTargets=document.querySelectorAll('main > section .sectionhead,main > section .panel,main > section .project-card,main > section .feature-card,main > .feature-band .sectionhead,main > .feature-band .feature-card,main > .feature-band .accordion,main > .feature-band .tabbar,main > .feature-band .tab-panel,main > .feature-band .carousel,main > .feature-band #comments');\n  const motionObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{\n    if(entry.isIntersecting){entry.target.classList.add('in-view');motionObserver.unobserve(entry.target)}\n  }),{threshold:.12,rootMargin:'0px 0px -5% 0px'});\n  motionTargets.forEach(el=>motionObserver.observe(el));\n}\n\n<\/script>\n<script>\n(function () {\n  function sendHeight() {\n    const root = document.documentElement;\n    const body = document.body;\n    const height = Math.max(\n      root ? root.scrollHeight : 0,\n      body ? body.scrollHeight : 0\n    );\n    parent.postMessage({ type: 'portfolio-resize', height: Math.ceil(height) }, '*');\n  }\n  window.addEventListener('load', function () {\n    sendHeight();\n    setTimeout(sendHeight, 250);\n    setTimeout(sendHeight, 900);\n  });\n  window.addEventListener('resize', sendHeight);\n  if ('ResizeObserver' in window) {\n    const observer = new ResizeObserver(() => requestAnimationFrame(sendHeight));\n    observer.observe(document.documentElement);\n    observer.observe(document.body);\n  }\n  document.fonts && document.fonts.ready.then(sendHeight);\n  document.addEventListener('click', function (event) {\n    const link = event.target.closest('a[href]');\n    if (!link || event.defaultPrevented || event.button !== 0 ||\n        event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;\n    const href = link.getAttribute('href') || '';\n    let destination;\n    try { destination = new URL(href, 'https://portfolio.local/'); } catch (_) { return; }\n    const file = destination.pathname.split('/').pop().toLowerCase();\n    const targetPage = file === 'academics.html' ? 'academics' :\n                       file === 'photography.html' ? 'photography' : null;\n    if (!targetPage) return;\n    event.preventDefault();\n    parent.postMessage({\n      type: 'portfolio-page',\n      page: targetPage,\n      hash: destination.hash || ''\n    }, '*');\n  });\n})();\n<\/script>\n\n<\/body><\/html>",
+    photography: "<!DOCTYPE html>\n<html lang=\"en\" data-theme=\"light\">\n<head>\n<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<meta name=\"description\" content=\"Photography portfolio of Ebaad Rehman.\">\n<title>Ebaad Rehman — Photography<\/title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap\" rel=\"stylesheet\">\n<style>\n:root{--bg:#111210;--surface:#1a1b18;--ink:#f4f1e9;--muted:#aaa99f;--line:#363630;--accent:#d7ff62;--accentText:#12130f;--nav:rgba(17,18,16,.88)}\n:root[data-theme=light]{--bg:#f4f1e9;--surface:#fffdf7;--ink:#191a16;--muted:#68685f;--line:#dedbd0;--accent:#557d12;--accentText:#fff;--nav:rgba(244,241,233,.9)}\n*{box-sizing:border-box}html,body{min-height:100%;}body{display:flex;flex-direction:column;min-height:100vh;}main{flex:1 0 auto;}footer.site-footer{flex:0 0 auto;margin-top:0;margin-bottom:0;}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:500 18px/1.7 Manrope,Arial,sans-serif;transition:background .35s,color .35s}a{color:inherit;text-decoration:none}button{font:inherit}.mono,.eyebrow{font-family:\"DM Mono\",monospace}.wrap{width:min(1440px,calc(100% - 80px));margin:auto}\nheader{position:sticky;top:0;z-index:20;background:var(--nav);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}.nav{height:82px;display:flex;align-items:center;justify-content:space-between}.brand{font-size:clamp(25px,2.3vw,34px);font-weight:900;letter-spacing:-.075em;white-space:nowrap}.brand b{color:var(--accent)}.navlinks{display:flex;gap:10px}.navlinks a{font-size:15px;padding:10px 16px;border:1px solid transparent;color:var(--muted);font-weight:700}.navlinks a.active,.navlinks a:hover{border-color:var(--line);color:var(--ink);background:var(--surface)}.tools{display:flex;gap:10px}.icon{width:44px;height:44px;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--ink);font-size:19px;cursor:pointer}\n.hero{min-height:690px;display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}.hero-copy{padding:110px max(40px,calc((100vw - 1440px)/2)) 90px max(40px,calc((100vw - 1440px)/2));display:flex;flex-direction:column;justify-content:center}.eyebrow{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}h1{font-size:clamp(64px,8vw,116px);line-height:.94;letter-spacing:-.09em;margin:28px 0;font-weight:700}.hero-copy p{font-size:20px;color:var(--muted);max-width:600px;margin:0}.hero-visual{position:relative;background:var(--surface);overflow:hidden;display:grid;place-items:center;min-height:550px;isolation:isolate}.visual-placeholder{width:70%;height:76%;border:1px solid var(--line);display:grid;place-items:center;text-align:center;color:var(--muted);font:13px \"DM Mono\",monospace;letter-spacing:.13em;text-transform:uppercase;background:linear-gradient(145deg,var(--surface),var(--bg));position:relative}.hero-visual:before{content:\"\";position:absolute;inset:-18px;background:inherit;filter:blur(18px);opacity:.55;z-index:-1}.visual-placeholder:before,.visual-placeholder:after{content:\"\";position:absolute;border:1px solid var(--line);inset:12% 18%}.visual-placeholder:after{inset:25% 7%}.visual-placeholder span{position:relative;z-index:1;background:var(--surface);padding:12px}\n.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}.btn{display:inline-flex;align-items:center;padding:12px 18px;border:1px solid var(--line);font-size:14px;font-weight:800;transition:.25s}.btn:hover{transform:translateY(-3px);border-color:var(--accent)}.btn.primary{background:var(--accent);color:var(--accentText);border-color:var(--accent)}\n.introbar{padding:35px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:180px 1fr;gap:30px}.introbar .eyebrow{padding-top:8px}.introbar p{font-size:18px;color:var(--muted);max-width:880px;margin:0}\n.gallery-section{padding:85px 0}.gallery-head{display:flex;justify-content:space-between;align-items:end;gap:25px;margin-bottom:35px}.gallery-head h2{font-size:clamp(42px,6vw,76px);letter-spacing:-.08em;line-height:1;margin:14px 0 0}.gallery-head p{font-size:16px;color:var(--muted);max-width:420px;margin:0}.upload{cursor:pointer;white-space:nowrap}\n.gallery{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));grid-auto-rows:90px;gap:14px}.tile{position:relative;grid-column:span 4;grid-row:span 4;overflow:hidden;background:var(--surface);border:1px solid var(--line);cursor:pointer;padding:0;text-align:left;color:var(--ink)}.tile:nth-child(6n+1){grid-column:span 6;grid-row:span 6}.tile:nth-child(6n+2){grid-column:span 6;grid-row:span 5}.tile:nth-child(6n+3){grid-column:span 4;grid-row:span 4}.tile:nth-child(6n+4){grid-column:span 4;grid-row:span 5}.tile:nth-child(6n+5){grid-column:span 4;grid-row:span 4}.tile:nth-child(6n){grid-column:span 4;grid-row:span 4}.tile img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.2,.7,.2,1),filter .5s;filter:saturate(.82)}.tile:hover img{transform:scale(1.055);filter:saturate(1)}.placeholder{height:100%;display:grid;place-items:center;background:linear-gradient(135deg,var(--surface),var(--bg));color:var(--muted);font:12px \"DM Mono\",monospace;letter-spacing:.13em;text-transform:uppercase}.placeholder:before{content:\"\";position:absolute;inset:15%;border:1px solid var(--line);pointer-events:none}.tilelabel{position:absolute;left:16px;bottom:14px;font:12px \"DM Mono\",monospace;letter-spacing:.1em;color:#fff;text-shadow:0 1px 8px #000;background:rgba(0,0,0,.32);padding:6px 9px}\n.note{font-size:13px;color:var(--muted);margin-top:18px}.statement{padding:85px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.statement blockquote{font-size:clamp(32px,5vw,64px);line-height:1.12;letter-spacing:-.065em;max-width:1100px;margin:0}.statement blockquote span{color:var(--accent)}\n.contact{padding:65px 0;display:flex;justify-content:space-between;align-items:center;gap:30px}.contact h2{font-size:clamp(34px,5vw,58px);letter-spacing:-.07em;margin:10px 0}.contact p{font-size:16px;color:var(--muted);margin:0}\nfooter{border-top:1px solid var(--line);padding:28px 0 40px;display:flex;justify-content:space-between;gap:20px;color:var(--muted);font:12px \"DM Mono\",monospace;text-transform:uppercase;letter-spacing:.08em}\n.reveal{opacity:0;transform:translateY(25px);transition:opacity .8s,transform .8s}.reveal.visible{opacity:1;transform:none}\n#viewer{position:fixed;inset:0;background:rgba(0,0,0,.96);z-index:50;display:grid;grid-template-rows:auto 1fr;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s}#viewer.open{opacity:1;visibility:visible}.viewerbar{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;color:white;font:13px \"DM Mono\",monospace}.viewerbar div{display:flex;gap:8px}.viewerbar button{padding:9px 13px;border:1px solid #555;background:transparent;color:white;cursor:pointer}.viewerimg{display:grid;place-items:center;padding:0 25px 25px;min-height:0}.viewerimg img{max-width:100%;max-height:85vh;object-fit:contain}\n@media(max-width:850px){.hero{grid-template-columns:1fr}.hero-copy{padding:80px 40px}.hero-visual{min-height:420px}.introbar{grid-template-columns:1fr;gap:12px}.gallery{grid-auto-rows:70px;gap:9px}}\n@media(max-width:560px){.wrap{width:calc(100% - 34px)}.nav{height:auto;min-height:72px;flex-wrap:wrap;padding:10px 0}.brand{font-size:19px}.navlinks{order:3;width:100%;justify-content:space-between}.navlinks a{flex:1;text-align:center;font-size:12px;padding:8px}.tools{margin-left:auto}.hero-copy{padding:65px 20px}.hero{min-height:0}.hero h1{font-size:clamp(60px,16vw,88px)}.hero-copy p{font-size:17px}.hero-visual{min-height:300px}.introbar{padding:28px 0}.introbar p{font-size:16px}.gallery-section{padding:60px 0}.gallery-head{align-items:flex-start;flex-direction:column}.gallery-head h2{font-size:48px}.gallery{grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:65px;gap:7px}.tile,.tile:nth-child(n){grid-column:span 3;grid-row:span 4}.tile:nth-child(5n+1){grid-column:span 6;grid-row:span 5}.statement{padding:60px 0}.contact{align-items:flex-start;flex-direction:column;padding:45px 0}.contact h2{font-size:40px}footer{flex-direction:column}}\n@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}.reveal{opacity:1;transform:none}}\n\n/* Interactive portfolio components */\n.menu-toggle{display:none}\n.extra-tools{display:flex;align-items:center;gap:9px}\n.searchbox{width:190px;max-width:26vw;padding:9px 12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:13px \"DM Mono\",monospace;outline:none}\n.searchbox:focus{border-color:var(--accent)}\n.menu-panel{display:none}\n.menu-panel.open{display:flex;position:absolute;right:4vw;top:76px;z-index:40;flex-direction:column;gap:5px;padding:14px;min-width:210px;background:var(--surface);border:1px solid var(--line);box-shadow:0 18px 45px #0002}\n.menu-panel a{padding:10px 12px;border-bottom:1px solid var(--line);font-size:14px}\n.feature-band{padding:60px 0;border-bottom:1px solid var(--line)}\n.feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}\n.feature-card{padding:25px;background:var(--surface);border:1px solid var(--line);min-height:170px}\n.feature-card .glyph{font-size:25px;color:var(--accent);display:block;margin-bottom:14px}\n.feature-card h3{font-size:19px;margin:0 0 8px;letter-spacing:-.04em}\n.feature-card p{margin:0;color:var(--muted);font-size:15px}\n.accordion{border-top:1px solid var(--line);margin-top:22px}\n.accordion details{border-bottom:1px solid var(--line);padding:17px 0}\n.accordion summary{cursor:pointer;font-weight:800;list-style:none;display:flex;justify-content:space-between;gap:20px}\n.accordion summary:after{content:\"+\";color:var(--accent);font-size:22px}\n.accordion details[open] summary:after{content:\"−\"}\n.accordion details p{color:var(--muted);margin:10px 0 0;font-size:16px}\n.tabbar{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}\n.tabbar button{border:1px solid var(--line);background:transparent;color:var(--muted);padding:9px 14px;cursor:pointer;font-size:13px}\n.tabbar button[aria-selected=true]{background:var(--accent);border-color:var(--accent);color:var(--accentText)}\n.tab-panel{padding:20px;background:var(--surface);border:1px solid var(--line);color:var(--muted)}\n.carousel{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;margin-top:20px}\n.carousel-card{padding:25px;background:var(--surface);border:1px solid var(--line);min-height:150px}\n.carousel-card h3{margin:0 0 8px;font-size:21px}\n.carousel-card p{margin:0;color:var(--muted);font-size:15px}\n.carousel button,.small-action{border:1px solid var(--line);background:transparent;color:var(--ink);padding:10px 13px;cursor:pointer}\n.comment-form{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}\n.comment-form input,.comment-form textarea{width:100%;padding:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:14px Manrope}\n.comment-form textarea{grid-column:1/-1;min-height:90px;resize:vertical}\n.comment-form button{justify-self:start}\n.comment-list{display:grid;gap:10px;margin-top:18px}\n.comment-item{padding:14px 16px;background:var(--surface);border:1px solid var(--line)}\n.comment-item b{font-size:14px}.comment-item p{margin:5px 0 0;color:var(--muted);font-size:14px}\n.loader-screen{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;transition:opacity .4s,visibility .4s}\n.loader-screen.done{opacity:0;visibility:hidden;pointer-events:none}\n.loader-mark{width:42px;height:42px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}\n@keyframes spin{to{transform:rotate(360deg)}}\n.search-hit{outline:2px solid var(--accent);outline-offset:4px}\n.search-hidden{display:none!important}\n@media(max-width:850px){.feature-grid{grid-template-columns:1fr 1fr}.searchbox{max-width:32vw}}\n@media(max-width:620px){.menu-toggle{display:grid}.navlinks{display:none!important}.extra-tools{gap:6px}.searchbox{width:135px;max-width:38vw}.feature-grid{grid-template-columns:1fr}.comment-form{grid-template-columns:1fr}.comment-form textarea{grid-column:auto}.menu-panel.open{right:17px;top:65px}}\n\n\n/* Section colour system: coordinated tonal shifts, not unrelated colour blocks */\n:root{\n  --section-a: color-mix(in srgb, var(--bg) 94%, var(--accent) 6%);\n  --section-b: color-mix(in srgb, var(--bg) 90%, #7b9acb 10%);\n  --section-c: color-mix(in srgb, var(--bg) 91%, #b28acb 9%);\n  --section-d: color-mix(in srgb, var(--bg) 91%, #78b7a0 9%);\n  --section-e: color-mix(in srgb, var(--bg) 92%, #d5a36d 8%);\n}\n:root[data-theme=light]{\n  --section-a:#f5f5ef;\n  --section-b:#edf1f6;\n  --section-c:#f2edf5;\n  --section-d:#edf4ef;\n  --section-e:#f6f0e8;\n}\n:root[data-theme=dark]{\n  --section-a:#151712;\n  --section-b:#151a21;\n  --section-c:#1b1720;\n  --section-d:#14201c;\n  --section-e:#211b15;\n}\nmain > section, main > .feature-band, main > footer{\n  position:relative;\n  isolation:isolate;\n  transition:background-color .75s cubic-bezier(.2,.75,.25,1), color .45s ease;\n}\nmain > section:nth-of-type(5n+1), main > .feature-band:nth-of-type(5n+1){background:var(--section-a)}\nmain > section:nth-of-type(5n+2), main > .feature-band:nth-of-type(5n+2){background:var(--section-b)}\nmain > section:nth-of-type(5n+3), main > .feature-band:nth-of-type(5n+3){background:var(--section-c)}\nmain > section:nth-of-type(5n+4), main > .feature-band:nth-of-type(5n+4){background:var(--section-d)}\nmain > section:nth-of-type(5n), main > .feature-band:nth-of-type(5n){background:var(--section-e)}\n/* Soft top/bottom colour wash makes each section feel connected */\nmain > section:before, main > .feature-band:before{\n  content:\"\";position:absolute;inset:0;z-index:-1;pointer-events:none;\n  background:radial-gradient(ellipse at 88% 8%, color-mix(in srgb,var(--accent) 8%,transparent), transparent 42%);\n  opacity:.8;\n}\nmain > section + section, main > .feature-band + section, main > section + .feature-band{\n  border-top:1px solid color-mix(in srgb,var(--line) 72%,var(--accent) 28%);\n}\n/* Reveal-on-scroll with a gentle directional entrance */\n.motion-ready main > section .sectionhead,\n.motion-ready main > section .panel,\n.motion-ready main > section .project-card,\n.motion-ready main > section .feature-card,\n.motion-ready main > .feature-band .sectionhead,\n.motion-ready main > .feature-band .feature-card,\n.motion-ready main > .feature-band .accordion,\n.motion-ready main > .feature-band .tabbar,\n.motion-ready main > .feature-band .tab-panel,\n.motion-ready main > .feature-band .carousel,\n.motion-ready main > .feature-band #comments{\n  opacity:0;transform:translate3d(0,28px,0) scale(.985);\n  transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.16,1,.3,1);\n}\n.motion-ready .in-view{opacity:1!important;transform:translate3d(0,0,0) scale(1)!important}\n.motion-ready main > section .feature-card:nth-child(2),\n.motion-ready main > .feature-band .feature-card:nth-child(2){transition-delay:.08s}\n.motion-ready main > section .feature-card:nth-child(3),\n.motion-ready main > .feature-band .feature-card:nth-child(3){transition-delay:.16s}\nmain > section .panel, main > .feature-band .feature-card, .project-card{\n  transition:transform .45s cubic-bezier(.2,.8,.2,1), box-shadow .45s ease, background-color .45s ease;\n}\nmain > section .panel:hover, main > .feature-band .feature-card:hover, .project-card:hover{\n  transform:translateY(-7px);\n  box-shadow:0 18px 42px color-mix(in srgb,var(--ink) 10%,transparent);\n}\n@media(prefers-reduced-motion:reduce){\n  *,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}\n  .motion-ready main > section *, .motion-ready main > .feature-band *{opacity:1!important;transform:none!important}\n}\n\n\n\n\n/* Unified palette: Midnight navy + deep forest + warm champagne gold */\n:root[data-theme=\"dark\"]{\n  --bg:#0B1012;\n  --surface:#141B1C;\n  --surface2:#1C2827;\n  --ink:#F2F0E8;\n  --muted:#AAB5AF;\n  --line:#2B3935;\n  --accent:#D6B477;\n  --accentText:#151712;\n  --nav:rgba(11,16,18,.93);\n  --section-a:#111D2A; /* midnight navy */\n  --section-b:#14231F; /* deep forest */\n  --section-c:#19241F; /* moss charcoal */\n  --section-d:#17212A; /* blue slate */\n  --section-e:#20251F; /* forest graphite */\n  --footer-bg:#080D0E;\n  --footer-ink:#F2F0E8;\n  --footer-muted:#AAB5AF;\n  --signal:#A8B99A;\n}\n:root[data-theme=\"light\"]{\n  --bg:#F4F2EB;\n  --surface:#FFFFFF;\n  --surface2:#E9EEE8;\n  --ink:#1A211D;\n  --muted:#647068;\n  --line:#D5DDD5;\n  --accent:#87683B;\n  --accentText:#FFFFFF;\n  --nav:rgba(244,242,235,.95);\n  --section-a:#E8EDF1; /* pale blue-grey */\n  --section-b:#E8EEE8; /* soft forest */\n  --section-c:#EEF1E9; /* sage neutral */\n  --section-d:#E5EBED; /* cool slate */\n  --section-e:#F0EEE5; /* warm stone */\n  --footer-bg:#E4EAE3;\n  --footer-ink:#1A211D;\n  --footer-muted:#647068;\n  --signal:#58745A;\n}\n/* Coordinated section rotation */\nmain > section:nth-of-type(5n+1), main > .feature-band:nth-of-type(5n+1){background:var(--section-a)!important}\nmain > section:nth-of-type(5n+2), main > .feature-band:nth-of-type(5n+2){background:var(--section-b)!important}\nmain > section:nth-of-type(5n+3), main > .feature-band:nth-of-type(5n+3){background:var(--section-c)!important}\nmain > section:nth-of-type(5n+4), main > .feature-band:nth-of-type(5n+4){background:var(--section-d)!important}\nmain > section:nth-of-type(5n), main > .feature-band:nth-of-type(5n){background:var(--section-e)!important}\n.eyebrow,.num,.brand b,.footer-brand b{color:var(--accent)}\n.tag,.project-card .tag,.feature-card .glyph{color:var(--signal)}\n.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accentText)}\n.icon:hover,.btn:hover{border-color:var(--signal)}\nmain > section:before,main > .feature-band:before{\n  background:radial-gradient(ellipse at 88% 8%,rgba(214,180,119,.09),transparent 46%);\n}\n:root[data-theme=\"light\"] main > section:before,\n:root[data-theme=\"light\"] main > .feature-band:before{\n  background:radial-gradient(ellipse at 88% 8%,rgba(135,104,59,.06),transparent 46%);\n}\nfooter.site-footer{background:var(--footer-bg);color:var(--footer-ink)}\n.footer-bottom,.footer-description,.footer-note{color:var(--footer-muted)}\n\n\n/* Rich light mode: deeper slate, ink navy and forest tones */\n:root[data-theme=\"light\"]{\n  --bg:#E9E8E1;\n  --surface:#F7F6F0;\n  --surface2:#DCE2DC;\n  --ink:#18221F;\n  --muted:#58665F;\n  --line:#C5CEC6;\n  --accent:#76562F;\n  --accentText:#FFFFFF;\n  --nav:rgba(233,232,225,.96);\n  --section-a:#DCE3E8; /* blue-grey */\n  --section-b:#D7E0D9; /* forest sage */\n  --section-c:#E1E0D7; /* stone */\n  --section-d:#D3DDE0; /* slate */\n  --section-e:#D8DED3; /* muted olive */\n  --footer-bg:#17221F;\n  --footer-ink:#F1F0E8;\n  --footer-muted:#BAC5BD;\n  --signal:#49634F;\n}\n/* Keep surfaces distinct from section backgrounds */\n:root[data-theme=\"light\"] .panel,\n:root[data-theme=\"light\"] .feature-card,\n:root[data-theme=\"light\"] .project-card,\n:root[data-theme=\"light\"] .carousel-card,\n:root[data-theme=\"light\"] .tab-panel,\n:root[data-theme=\"light\"] .comment-item{\n  background:#F7F6F0;\n  border-color:#C5CEC6;\n  box-shadow:0 8px 24px rgba(23,35,30,.055);\n}\n:root[data-theme=\"light\"] .navlinks a.active,\n:root[data-theme=\"light\"] .navlinks a:hover{\n  background:#D6DED8;\n  border-color:#B8C5BA;\n  color:#18221F;\n}\n:root[data-theme=\"light\"] .icon,\n:root[data-theme=\"light\"] .searchbox,\n:root[data-theme=\"light\"] .comment-form input,\n:root[data-theme=\"light\"] .comment-form textarea{\n  background:#F7F6F0;\n  border-color:#BCC8BE;\n  color:#18221F;\n}\n:root[data-theme=\"light\"] main > section:before,\n:root[data-theme=\"light\"] main > .feature-band:before{\n  background:radial-gradient(ellipse at 88% 8%,rgba(54,82,67,.12),transparent 48%);\n}\n:root[data-theme=\"light\"] .footer-heading{color:#BAC5BD}\n:root[data-theme=\"light\"] .footer-links a{color:#F1F0E8}\n:root[data-theme=\"light\"] .footer-links a:hover{color:#D6B477}\n:root[data-theme=\"light\"] .footer-bottom,\n:root[data-theme=\"light\"] .footer-description,\n:root[data-theme=\"light\"] .footer-note{color:#BAC5BD}\n:root[data-theme=\"light\"] .tag{background:#E1E7DF;border-color:#C0CCC1;color:#405B48}\n:root[data-theme=\"light\"] .btn:not(.primary){background:rgba(247,246,240,.72);border-color:#AEBBB1;color:#25352D}\n\n\n/* Deeper dark mode: near-black midnight, deep forest and restrained gold */\n:root[data-theme=\"dark\"]{\n  --bg:#070B0D;\n  --surface:#0D1416;\n  --surface2:#121D1C;\n  --ink:#F0EFE8;\n  --muted:#9AA8A1;\n  --line:#202D2A;\n  --accent:#D6B477;\n  --accentText:#111512;\n  --nav:rgba(7,11,13,.96);\n  --section-a:#09121B;\n  --section-b:#0A1713;\n  --section-c:#101916;\n  --section-d:#0B151D;\n  --section-e:#111812;\n  --footer-bg:#050809;\n  --footer-ink:#F0EFE8;\n  --footer-muted:#9AA8A1;\n  --signal:#A8B99A;\n}\n:root[data-theme=\"dark\"] .panel,\n:root[data-theme=\"dark\"] .feature-card,\n:root[data-theme=\"dark\"] .project-card,\n:root[data-theme=\"dark\"] .carousel-card,\n:root[data-theme=\"dark\"] .tab-panel,\n:root[data-theme=\"dark\"] .comment-item{\n  background:#0D1416;\n  border-color:#26332F;\n  box-shadow:0 12px 32px rgba(0,0,0,.22);\n}\n:root[data-theme=\"dark\"] .navlinks a.active,\n:root[data-theme=\"dark\"] .navlinks a:hover{\n  background:#121D1C;\n  border-color:#34423B;\n}\n:root[data-theme=\"dark\"] .icon,\n:root[data-theme=\"dark\"] .searchbox,\n:root[data-theme=\"dark\"] .comment-form input,\n:root[data-theme=\"dark\"] .comment-form textarea{\n  background:#0B1214;\n  border-color:#293733;\n  color:#F0EFE8;\n}\n:root[data-theme=\"dark\"] main > section:before,\n:root[data-theme=\"dark\"] main > .feature-band:before{\n  background:radial-gradient(ellipse at 88% 8%,rgba(214,180,119,.055),transparent 46%);\n}\n:root[data-theme=\"dark\"] .tag{background:#111C19;border-color:#2B3A33;color:#B6C5A8}\n\n\n/* Restore the original vivid green highlight in the dark-mode hero heading. */\n:root[data-theme=\"dark\"] .hero h1 span{color:#D7FF62 !important;}\n\n/* Restored original single-colour theme: green accent, consistent section surfaces. */\n:root, :root[data-theme=\"dark\"] {\n  --bg:#10110f; --surface:#191b17; --surface2:#22241e; --ink:#f3f3eb;\n  --muted:#b5b8aa; --line:#3b3e34; --accent:#d7ff62; --accentText:#11130d;\n  --nav:rgba(16,17,15,.9); --signal:#d7ff62;\n  --section-a:var(--bg); --section-b:var(--bg); --section-c:var(--bg);\n  --section-d:var(--bg); --section-e:var(--bg); --footer-bg:var(--bg);\n  --footer-ink:var(--ink); --footer-muted:var(--muted);\n}\n:root[data-theme=\"light\"] {\n  --bg:#f5f5ef; --surface:#fff; --surface2:#e9ebe1; --ink:#171914;\n  --muted:#62675b; --line:#d5d9cb; --accent:#557d12; --accentText:#fff;\n  --nav:rgba(245,245,239,.92); --signal:#557d12;\n  --section-a:var(--bg); --section-b:var(--bg); --section-c:var(--bg);\n  --section-d:var(--bg); --section-e:var(--bg); --footer-bg:var(--bg);\n  --footer-ink:var(--ink); --footer-muted:var(--muted);\n}\nmain > section, main > .feature-band { background:var(--bg)!important; }\nmain > section:before, main > .feature-band:before { background:none!important; opacity:0!important; }\n.site-footer { background:var(--bg)!important; color:var(--muted)!important; }\n.site-footer * { --footer-bg:var(--bg); }\n\n\n/* Restore the original contrasting footer treatment */\n.site-footer{\n  background:#171B14!important;\n  color:#F3F3EB!important;\n  border-top:1px solid #343D2B;\n}\n.site-footer .footer-brand,\n.site-footer .footer-heading{color:#F3F3EB!important}\n.site-footer .footer-brand b,\n.site-footer a:hover{color:#D7FF62!important}\n.site-footer .footer-description,\n.site-footer .footer-note,\n.site-footer .footer-bottom{color:#B5B8AA!important}\n.site-footer .footer-links a{color:#D0D5C5!important}\n.site-footer .footer-links a:hover{color:#D7FF62!important}\n:root[data-theme=\"light\"] .site-footer{\n  background:#E3E8D8!important;\n  color:#171914!important;\n  border-top:1px solid #C7D0B7;\n}\n:root[data-theme=\"light\"] .site-footer .footer-brand,\n:root[data-theme=\"light\"] .site-footer .footer-heading{color:#171914!important}\n:root[data-theme=\"light\"] .site-footer .footer-brand b,\n:root[data-theme=\"light\"] .site-footer a:hover{color:#557D12!important}\n:root[data-theme=\"light\"] .site-footer .footer-description,\n:root[data-theme=\"light\"] .site-footer .footer-note,\n:root[data-theme=\"light\"] .site-footer .footer-bottom{color:#62675B!important}\n:root[data-theme=\"light\"] .site-footer .footer-links a{color:#343D2B!important}\n:root[data-theme=\"light\"] .site-footer .footer-links a:hover{color:#557D12!important}\n\n\n/* Footer card layout */\n.site-footer{\n  background:#171B14!important;\n  color:#F3F3EB!important;\n  border-top:1px solid #343D2B;\n  padding:54px 0 22px;\n}\n.site-footer .site-footer-inner{width:min(1320px,calc(100% - 88px));margin:0 auto}\n.site-footer .footer-top{\n  display:grid;\n  grid-template-columns:1.15fr 1fr 1fr;\n  gap:16px;\n  align-items:stretch;\n}\n.site-footer .footer-card{\n  min-width:0;\n  padding:27px;\n  background:#20271B;\n  border:1px solid #3A4630;\n  border-radius:14px;\n  box-shadow:0 14px 34px rgba(0,0,0,.16);\n}\n.site-footer .footer-brand-card{\n  background:#242D1D;\n  border-color:#56663B;\n  display:flex;\n  flex-direction:column;\n  align-items:flex-start;\n}\n.site-footer .footer-brand{\n  color:#F3F3EB!important;\n  font-size:30px;\n  font-weight:800;\n  letter-spacing:-.07em;\n  line-height:1;\n  margin:0 0 18px;\n}\n.site-footer .footer-brand b{color:#D7FF62!important}\n.site-footer .footer-description,.site-footer .footer-note{\n  color:#B5BDAA!important;\n  font-size:14px;\n  line-height:1.75;\n  margin:0;\n}\n.site-footer .footer-heading{\n  color:#D7FF62!important;\n  font:12px \"DM Mono\",monospace;\n  letter-spacing:.14em;\n  text-transform:uppercase;\n  margin:0 0 18px;\n}\n.site-footer .footer-links{display:flex;flex-direction:column;gap:11px}\n.site-footer .footer-links a{\n  color:#E0E5D8!important;\n  font-size:14px;\n  line-height:1.45;\n  width:fit-content;\n  transition:color .2s,transform .2s;\n}\n.site-footer .footer-links a:hover{\n  color:#D7FF62!important;\n  transform:translateX(3px);\n}\n.site-footer .footer-note{margin-top:19px;font-size:12px}\n.site-footer .footer-card-cta{\n  display:inline-flex;\n  gap:10px;\n  align-items:center;\n  margin-top:auto;\n  padding:10px 13px;\n  border:1px solid #64764A;\n  border-radius:7px;\n  color:#D7FF62!important;\n  font-size:13px;\n  font-weight:800;\n}\n.site-footer .footer-card-cta:hover{background:#303C25}\n.site-footer .footer-bottom{\n  display:flex;\n  justify-content:space-between;\n  align-items:center;\n  flex-wrap:wrap;\n  gap:14px;\n  margin-top:20px;\n  padding-top:20px;\n  border-top:1px solid #3A4630;\n  color:#AEB8A2!important;\n  font:11px \"DM Mono\",monospace;\n  letter-spacing:.06em;\n}\n:root[data-theme=\"light\"] .site-footer{\n  background:#171B14!important;\n  color:#F3F3EB!important;\n  border-top-color:#343D2B;\n}\n:root[data-theme=\"light\"] .site-footer .footer-card{\n  background:#20271B;\n  border-color:#3A4630;\n}\n:root[data-theme=\"light\"] .site-footer .footer-brand-card{\n  background:#242D1D;\n  border-color:#56663B;\n}\n:root[data-theme=\"light\"] .site-footer .footer-brand,\n:root[data-theme=\"light\"] .site-footer .footer-heading{color:#F3F3EB!important}\n:root[data-theme=\"light\"] .site-footer .footer-heading{color:#D7FF62!important}\n:root[data-theme=\"light\"] .site-footer .footer-brand b{color:#D7FF62!important}\n:root[data-theme=\"light\"] .site-footer .footer-description,\n:root[data-theme=\"light\"] .site-footer .footer-note{color:#B5BDAA!important}\n:root[data-theme=\"light\"] .site-footer .footer-links a{color:#E0E5D8!important}\n:root[data-theme=\"light\"] .site-footer .footer-links a:hover,\n:root[data-theme=\"light\"] .site-footer .footer-card-cta{color:#D7FF62!important}\n@media(max-width:850px){\n  .site-footer .footer-top{grid-template-columns:1fr 1fr}\n  .site-footer .footer-brand-card{grid-column:1/-1}\n}\n@media(max-width:560px){\n  .site-footer{padding:38px 0 18px}\n  .site-footer .site-footer-inner{width:calc(100% - 34px)}\n  .site-footer .footer-top{grid-template-columns:1fr}\n  .site-footer .footer-brand-card{grid-column:auto}\n  .site-footer .footer-card{padding:22px}\n  .site-footer .footer-bottom{flex-direction:column;align-items:flex-start}\n}\n\n<\/style><\/head><body id=\"top\">\n<header><div class=\"wrap nav\"><a class=\"brand\" href=\"academics.html\">EBAAD<b>.<\/b>REHMAN<\/a><nav class=\"navlinks\"><a href=\"academics.html\">Academics<\/a><a class=\"active\" href=\"photography.html\">Photography<\/a><\/nav><div class=\"extra-tools\">\n      <input class=\"searchbox\" id=\"siteSearch\" type=\"search\" placeholder=\"Search this page…\" aria-label=\"Search this page\">\n      <div class=\"tools\"><button class=\"icon\" id=\"theme\" aria-label=\"Toggle light and dark theme\" title=\"Toggle light/dark\">◐<\/button>\n      <button class=\"icon menu-toggle\" id=\"menuToggle\" aria-label=\"Open navigation menu\" aria-expanded=\"false\">☰<\/button><\/div>\n    <\/div>\n    <nav class=\"menu-panel\" id=\"menuPanel\" aria-label=\"Quick navigation\">\n      <a href=\"academics.html\">Academics & engineering<\/a><a href=\"photography.html\">Photography<\/a>\n      <a href=\"#about\">About<\/a><a href=\"#interactive\">Explore more<\/a><a href=\"#comments\">Comments<\/a>\n    <\/nav><\/div><\/header>\n<main>\n<section class=\"hero\" id=\"about\"><div class=\"hero-copy\"><div class=\"eyebrow reveal\">Photography · Personal collection<\/div><h1 class=\"reveal\">Look closer.<br><span style=\"color:var(--accent)\">Feel more.<\/span><\/h1><p class=\"reveal\">A visual journal by Ebaad Rehman. Frames shaped by light, colour, texture and the small details that make ordinary moments worth remembering.<\/p><div class=\"actions reveal\"><a class=\"btn primary\" href=\"#gallery\">Explore the gallery ↓<\/a><a class=\"btn\" href=\"academics.html\">Engineering portfolio ↗<\/a><\/div><\/div><div class=\"hero-visual\"><div class=\"visual-placeholder\"><span>Featured photograph<br>add your hero image<\/span><\/div><\/div><\/section>\n<div class=\"wrap\"><div class=\"introbar reveal\"><div class=\"eyebrow\">The approach<\/div><p>Photography is the creative counterpart to engineering: observe carefully, experiment with perspective, and pay attention to details that might otherwise pass unnoticed. This space is dedicated to selected photographs and visual experiments.<\/p><\/div><\/div>\n<section class=\"gallery-section\" id=\"gallery\"><div class=\"wrap\"><div class=\"gallery-head reveal\"><div><div class=\"eyebrow\">Selected frames · 01—22<\/div><h2>Collected moments.<\/h2><\/div><div><p>Add up to 22 photographs to preview your gallery. The selected images stay in this browser session only.<\/p><label class=\"btn upload\">Add photographs <input id=\"photos\" type=\"file\" accept=\"image/*\" multiple hidden><\/label><\/div><\/div><div class=\"gallery\" id=\"galleryGrid\"><\/div><p class=\"note\">To publish your photographs, place the image files in your website folder and connect their file paths in the gallery code.<\/p><\/div><\/section>\n<section class=\"statement\"><div class=\"wrap reveal\"><blockquote>“The best frames often come from <span>slowing down<\/span> long enough to notice.”<\/blockquote><\/div><\/section>\n<section class=\"contact\"><div class=\"wrap\" style=\"display:flex;justify-content:space-between;align-items:center;gap:30px\"><div><div class=\"eyebrow\">Two sides, one perspective<\/div><h2>Back to the build bench?<\/h2><p>Explore my engineering work, projects and technical experience.<\/p><\/div><a class=\"btn\" href=\"academics.html\">Go to academics ↗<\/a><\/div><\/section>\n\n<section class=\"feature-band\" id=\"interactive\"><div class=\"wrap\">\n  <div class=\"sectionhead\"><div class=\"num\">02 / EXPLORE<\/div><div><h2>More than a gallery.<\/h2><p>A few interactive ways to explore the creative side of this portfolio.<\/p><\/div><\/div>\n  <div class=\"feature-grid\">\n    <article class=\"feature-card\"><span class=\"glyph\">◉<\/span><h3>Observe<\/h3><p>Look for interesting light, colour, geometry and overlooked details.<\/p><\/article>\n    <article class=\"feature-card\"><span class=\"glyph\">⌖<\/span><h3>Experiment<\/h3><p>Try a different angle, crop or perspective before settling on a frame.<\/p><\/article>\n    <article class=\"feature-card\"><span class=\"glyph\">✳<\/span><h3>Collect<\/h3><p>Build a visual journal of moments, places and personal projects.<\/p><\/article>\n  <\/div>\n  <div class=\"sectionhead\" style=\"margin-top:48px\"><div class=\"num\">CAROUSEL<\/div><div><h2>What I look for.<\/h2><p>Use the arrows to move through a few photography themes.<\/p>\n    <div class=\"carousel\"><button id=\"carouselPrev\" aria-label=\"Previous slide\">←<\/button><article class=\"carousel-card\" aria-live=\"polite\"><div class=\"eyebrow\" id=\"slideCount\">01 / 04<\/div><h3 id=\"slideTitle\">Light & shadow<\/h3><p id=\"slideText\">How contrast and direction of light change the feeling of a frame.<\/p><\/article><button id=\"carouselNext\" aria-label=\"Next slide\">→<\/button><\/div>\n  <\/div><\/div>\n  <div class=\"sectionhead\" style=\"margin-top:48px\"><div class=\"num\">QUICK FAQ<\/div><div><h2>Behind the lens.<\/h2><p>Expandable notes about this visual journal.<\/p>\n    <div class=\"accordion\"><details><summary>What belongs in this gallery?<\/summary><p>Personal photographs and visual experiments. Replace the sample frames with your own images using the Add photographs control above.<\/p><\/details><details><summary>Can I use this on my phone?<\/summary><p>Yes. The navigation collapses into a hamburger menu and the gallery rearranges for smaller screens.<\/p><\/details><\/div>\n  <\/div><\/div>\n  <div class=\"sectionhead\" style=\"margin-top:48px\"><div class=\"num\">COMMENTS<\/div><div><h2>Share a thought.<\/h2><p>Comments are stored locally in this browser only; there is no backend or public comment feed.<\/p>\n    <div id=\"comments\"><form class=\"comment-form\" id=\"commentForm\"><input id=\"commentName\" maxlength=\"40\" placeholder=\"Your name\" aria-label=\"Your name\" required><input id=\"commentTopic\" maxlength=\"60\" placeholder=\"Topic (optional)\" aria-label=\"Topic\"><textarea id=\"commentText\" maxlength=\"500\" placeholder=\"Write a comment…\" aria-label=\"Comment\" required><\/textarea><button class=\"btn primary\" type=\"submit\">Post comment ↗<\/button><\/form><div class=\"comment-list\" id=\"commentList\" aria-live=\"polite\"><\/div><\/div>\n  <\/div><\/div>\n<\/div><\/section>\n\n<\/main><footer class=\"site-footer\">\n  <div class=\"site-footer-inner wrap\">\n    <div class=\"footer-top\">\n      <section class=\"footer-card footer-brand-card\" aria-label=\"About Ebaad\">\n        <p class=\"footer-brand\">EBAAD<b>.<\/b><\/p>\n        <p class=\"footer-description\">A personal visual journal for photography, creative experiments, light, colour and everyday details.<\/p>\n        <a class=\"footer-card-cta\" href=\"https://github.com/Ebaad-esr\" target=\"_blank\" rel=\"noopener noreferrer\">Visit GitHub profile <span aria-hidden=\"true\">↗<\/span><\/a>\n      <\/section>\n      <section class=\"footer-card\" aria-label=\"Explore portfolio\">\n        <p class=\"footer-heading\">Explore<\/p>\n        <nav class=\"footer-links\" aria-label=\"Footer navigation\">\n          <a href=\"#gallery\">Photography gallery ↗<\/a>\n          <a href=\"#interactive\">Creative notes ↗<\/a>\n          <a href=\"academics.html\">Academics &amp; projects ↗<\/a>\n          <a href=\"https://github.com/Ebaad-esr\" target=\"_blank\" rel=\"noopener noreferrer\">GitHub profile ↗<\/a>\n          <a href=\"https://quiz-craft.up.railway.app\" target=\"_blank\" rel=\"noopener noreferrer\">QuizCraft live demo ↗<\/a>\n        <\/nav>\n      <\/section>\n      <section class=\"footer-card\" aria-label=\"Website information and contact\">\n        <p class=\"footer-heading\">About this website<\/p>\n        <div class=\"footer-links\">\n          <a href=\"https://github.com/Ebaad-esr\" target=\"_blank\" rel=\"noopener noreferrer\">Contact via GitHub ↗<\/a>\n          <a href=\"https://www.instagram.com/esr__lens/\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Instagram profile @esr__lens\"><span aria-hidden=\"true\">◎<\/span> Instagram @esr__lens ↗<\/a>\n          <a href=\"#comments\">Comments<\/a>\n          <a href=\"#top\">Back to top ↑<\/a>\n        <\/div>\n        <p class=\"footer-note\">Comments and gallery selections are handled locally in your browser; this site does not submit them to a server.<\/p>\n      <\/section>\n    <\/div>\n    <div class=\"footer-bottom\">\n      <span>© <span id=\"year\"><\/span> Ebaad Rehman. All rights reserved.<\/span>\n      <span>Engineering · Embedded systems · Projects<\/span>\n      <a href=\"#top\">Back to top ↑<\/a>\n    <\/div>\n  <\/div>\n<\/footer>\n<div id=\"viewer\" role=\"dialog\" aria-modal=\"true\" aria-label=\"Photograph viewer\"><div class=\"viewerbar\"><span id=\"count\">01 / 22<\/span><div><button id=\"prev\">← Prev<\/button><button id=\"next\">Next →<\/button><button id=\"close\">Close ×<\/button><\/div><\/div><div class=\"viewerimg\"><img id=\"viewImg\" alt=\"Selected photograph\"><\/div><\/div>\n<script>\n(()=>{const root=document.documentElement,theme=document.getElementById('theme'),saved=localStorage.getItem('ebaad-theme-v2');if(saved)root.dataset.theme=saved;theme.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';localStorage.setItem('ebaad-theme-v2',root.dataset.theme)});document.getElementById('year').textContent=new Date().getFullYear();const reveal=document.querySelectorAll('.reveal');if(!matchMedia('(prefers-reduced-motion: reduce)').matches&&'IntersectionObserver'in window){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target)}}),{threshold:.12});reveal.forEach(e=>io.observe(e))}else reveal.forEach(e=>e.classList.add('visible'));\nconst arr=new Array(22).fill(null),grid=document.getElementById('galleryGrid'),input=document.getElementById('photos'),viewer=document.getElementById('viewer'),img=document.getElementById('viewImg'),count=document.getElementById('count');let cur=0;\nfunction draw(){grid.innerHTML='';arr.forEach((src,i)=>{const b=document.createElement('button');b.type='button';b.className='tile';b.setAttribute('aria-label',src?`View photograph ${i+1}`:`Photograph placeholder ${i+1}`);if(src){const im=document.createElement('img');im.src=src;im.alt=`Photograph ${i+1}`;b.appendChild(im)}else{const ph=document.createElement('span');ph.className='placeholder';ph.textContent=`Frame ${String(i+1).padStart(2,'0')}`;b.appendChild(ph)}const lab=document.createElement('span');lab.className='tilelabel';lab.textContent=`FRAME ${String(i+1).padStart(2,'0')}`;b.appendChild(lab);b.addEventListener('click',()=>{if(src)open(i)});grid.appendChild(b)})}\nfunction update(){img.src=arr[cur];count.textContent=`${String(cur+1).padStart(2,'0')} / 22`}function open(i){cur=i;update();viewer.classList.add('open');document.body.style.overflow='hidden'}function close(){viewer.classList.remove('open');document.body.style.overflow=''}function step(d){for(let n=0;n<22;n++){cur=(cur+d+22)%22;if(arr[cur]){update();return}}}\ndocument.getElementById('prev').onclick=()=>step(-1);document.getElementById('next').onclick=()=>step(1);document.getElementById('close').onclick=close;viewer.addEventListener('click',e=>{if(e.target===viewer)close()});document.addEventListener('keydown',e=>{if(!viewer.classList.contains('open'))return;if(e.key==='Escape')close();if(e.key==='ArrowLeft')step(-1);if(e.key==='ArrowRight')step(1)});\ninput.addEventListener('change',e=>{arr.forEach((u,i)=>{if(u)URL.revokeObjectURL(u);arr[i]=null});Array.from(e.target.files).filter(f=>f.type.startsWith('image/')).slice(0,22).forEach((f,i)=>arr[i]=URL.createObjectURL(f));draw();input.value=''});draw()})();\n\n// Responsive hamburger navigation\nconst menuToggle=document.getElementById('menuToggle'),menuPanel=document.getElementById('menuPanel');\nif(menuToggle&&menuPanel){menuToggle.addEventListener('click',()=>{const open=menuPanel.classList.toggle('open');menuToggle.setAttribute('aria-expanded',String(open));menuToggle.textContent=open?'×':'☰'});menuPanel.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{menuPanel.classList.remove('open');menuToggle.setAttribute('aria-expanded','false');menuToggle.textContent='☰'}));}\n// Search across visible page text; filters matching sections/cards and scrolls to the first match.\nconst search=document.getElementById('siteSearch');\nif(search){search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();document.querySelectorAll('main section, .feature-card, .tile').forEach(el=>{el.classList.remove('search-hidden','search-hit');if(q&&!el.textContent.toLowerCase().includes(q))el.classList.add('search-hidden')});if(q){const hit=document.querySelector('main section:not(.search-hidden),.feature-card:not(.search-hidden),.tile:not(.search-hidden)');if(hit)hit.classList.add('search-hit')} });search.addEventListener('keydown',e=>{if(e.key==='Escape'){search.value='';search.dispatchEvent(new Event('input'))}});}\n// Tabs\ndocument.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',String(b===btn)));document.querySelectorAll('[role=tabpanel]').forEach(p=>p.hidden=p.id!==btn.dataset.tab)}));\n// Local-only comments\nconst form=document.getElementById('commentForm'),list=document.getElementById('commentList');\nif(form&&list){const key='ebaad-portfolio-comments-v1';let entries=[];try{entries=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){entries=[]}function renderComments(){list.innerHTML='';entries.slice(-12).reverse().forEach(item=>{const card=document.createElement('article');card.className='comment-item';const name=document.createElement('b');name.textContent=item.name+(item.topic?' · '+item.topic:'');const body=document.createElement('p');body.textContent=item.text;card.append(name,body);list.append(card)})}renderComments();form.addEventListener('submit',e=>{e.preventDefault();entries.push({name:document.getElementById('commentName').value.trim(),topic:document.getElementById('commentTopic').value.trim(),text:document.getElementById('commentText').value.trim()});localStorage.setItem(key,JSON.stringify(entries));form.reset();renderComments()})}\n// Photography carousel\nconst slides=[['Light & shadow','How contrast and direction of light change the feeling of a frame.'],['Colour','Notice how a small palette can give an image a consistent mood.'],['Perspective','Change your position and discover a different composition.'],['Details','Textures and small everyday details can become the main subject.']];\nlet slideIndex=0;function showSlide(){const t=document.getElementById('slideTitle'),d=document.getElementById('slideText'),c=document.getElementById('slideCount');if(t&&d&&c){t.textContent=slides[slideIndex][0];d.textContent=slides[slideIndex][1];c.textContent=String(slideIndex+1).padStart(2,'0')+' / '+String(slides.length).padStart(2,'0')}}const cp=document.getElementById('carouselPrev'),cn=document.getElementById('carouselNext');if(cp&&cn){cp.onclick=()=>{slideIndex=(slideIndex+slides.length-1)%slides.length;showSlide()};cn.onclick=()=>{slideIndex=(slideIndex+1)%slides.length;showSlide()};showSlide()}\n// Brief page loader\nconst loader=document.createElement('div');loader.className='loader-screen';loader.setAttribute('aria-label','Loading portfolio');loader.innerHTML='<div class=\"loader-mark\" role=\"status\" aria-label=\"Loading\"><\/div>';document.body.append(loader);window.addEventListener('load',()=>setTimeout(()=>loader.classList.add('done'),220));setTimeout(()=>loader.classList.add('done'),1200);\n\n\n// Scroll reveal for section content; respects reduced-motion preferences.\nif(!window.matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window){\n  document.documentElement.classList.add('motion-ready');\n  const motionTargets=document.querySelectorAll('main > section .sectionhead,main > section .panel,main > section .project-card,main > section .feature-card,main > .feature-band .sectionhead,main > .feature-band .feature-card,main > .feature-band .accordion,main > .feature-band .tabbar,main > .feature-band .tab-panel,main > .feature-band .carousel,main > .feature-band #comments');\n  const motionObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{\n    if(entry.isIntersecting){entry.target.classList.add('in-view');motionObserver.unobserve(entry.target)}\n  }),{threshold:.12,rootMargin:'0px 0px -5% 0px'});\n  motionTargets.forEach(el=>motionObserver.observe(el));\n}\n\n<\/script>\n<script>\n(function () {\n  function sendHeight() {\n    const root = document.documentElement;\n    const body = document.body;\n    const height = Math.max(\n      root ? root.scrollHeight : 0,\n      body ? body.scrollHeight : 0\n    );\n    parent.postMessage({ type: 'portfolio-resize', height: Math.ceil(height) }, '*');\n  }\n  window.addEventListener('load', function () {\n    sendHeight();\n    setTimeout(sendHeight, 250);\n    setTimeout(sendHeight, 900);\n  });\n  window.addEventListener('resize', sendHeight);\n  if ('ResizeObserver' in window) {\n    const observer = new ResizeObserver(() => requestAnimationFrame(sendHeight));\n    observer.observe(document.documentElement);\n    observer.observe(document.body);\n  }\n  document.fonts && document.fonts.ready.then(sendHeight);\n  document.addEventListener('click', function (event) {\n    const link = event.target.closest('a[href]');\n    if (!link) return;\n    const href = link.getAttribute('href') || '';\n    let destination;\n    try { destination = new URL(href, 'https://portfolio.local/'); } catch (_) { return; }\n    const file = destination.pathname.split('/').pop().toLowerCase();\n    const targetPage = file === 'academics.html' ? 'academics' :\n                       file === 'photography.html' ? 'photography' : null;\n    if (targetPage) {\n      event.preventDefault();\n      parent.postMessage({\n        type: 'portfolio-page',\n        page: targetPage,\n        hash: destination.hash || ''\n      }, '*');\n    }\n  });\n})();\n<\/script>\n\n<\/body><\/html>"
+  };
+  let currentPage = 'academics';
+  let navigationId = 0;
+  const pageLoader = document.getElementById('page-loader');
+  let loaderTimer;
+  let revealTimer;
 
-    <!-- INTERACTIVE CUSTOM BRUTALIST CURSOR -->
-    <div id="brutalist-cursor" class="w-5 h-5 border-2 border-accent bg-accent/10 hidden md:block"></div>
+  function showLoader() {
+    clearTimeout(loaderTimer);
+    pageLoader.classList.remove('hidden');
+  }
+  function hideLoader(id) {
+    if (id !== undefined && id !== navigationId) return;
+    clearTimeout(loaderTimer);
+    clearTimeout(revealTimer);
+    pageLoader.classList.add('hidden');
+  }
+  function navigateTo(page, hash) {
+    if (!Object.prototype.hasOwnProperty.call(pages, page)) return;
+    if (page === currentPage) {
+      if (hash) {
+        try { frame.contentWindow.location.hash = hash; } catch (_) {}
+      }
+      return;
+    }
+    const id = ++navigationId;
+    showLoader();
+    currentPage = page;
+    frame.onload = function () {
+      if (hash) {
+        try { frame.contentWindow.location.hash = hash; } catch (_) {}
+      }
+      requestAnimationFrame(() => {
+        try {
+          const doc = frame.contentDocument;
+          const h = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight);
+          frame.style.height = Math.max(1, Math.ceil(h)) + 'px';
+        } catch (_) {}
+        hideLoader(id);
+      });
+      frame.onload = null;
+    };
+    frame.srcdoc = pages[page];
+    // Failsafe: a delayed font/image must never leave the full-screen loader stuck.
+    loaderTimer = setTimeout(() => hideLoader(id), 2200);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
 
-    <!-- CANVAS INTERACTIVE BACKGROUND LAYER -->
-    <canvas id="interactive-grid-canvas" class="fixed inset-0 pointer-events-none z-0 opacity-50"></canvas>
-    <div id="bg-overlay-effects" class="fixed inset-0 pointer-events-none z-0"></div>
+  showLoader();
+  const initialId = navigationId;
+  frame.onload = function () {
+    try {
+      const doc = frame.contentDocument;
+      const h = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight);
+      frame.style.height = Math.max(1, Math.ceil(h)) + 'px';
+    } catch (_) {}
+    hideLoader(initialId);
+    frame.onload = null;
+  };
+  frame.srcdoc = pages.academics;
+  loaderTimer = setTimeout(() => hideLoader(initialId), 2200);
 
-    <!-- GLOBAL LOADER COMPONENT -->
-    <div id="page-loader" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center border-4 border-accent transition-opacity duration-500 pointer-events-none opacity-0">
-        <div class="flex items-center space-x-3 mb-4">
-            <svg class="animate-spin h-8 w-8 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span class="text-accent font-bold tracking-widest text-lg font-mono">// INITIALIZING_SYSTEM_CORE...</span>
-        </div>
-        <div class="w-64 h-2 bg-borderGray overflow-hidden border border-borderGray">
-            <div class="h-full bg-accent animate-pulse w-full"></div>
-        </div>
-    </div>
+  window.addEventListener('message', function (event) {
+    if (event.source !== frame.contentWindow || !event.data) return;
+    if (event.data.type === 'portfolio-page') {
+      navigateTo(event.data.page, event.data.hash || '');
+    } else if (event.data.type === 'portfolio-resize' &&
+               Number.isFinite(event.data.height)) {
+      frame.style.height = Math.max(1, Math.ceil(event.data.height)) + 'px';
+    }
+  });
 
-    <!-- TAB OR NAV BAR WITH SEARCH, DARK/LIGHT TOGGLE & HAMBURGER MENU -->
-    <nav class="sticky top-0 z-50 bg-black border-b border-borderGray px-4 sm:px-6 py-4 flex flex-wrap justify-between items-center">
-        <div class="flex items-center space-x-4">
-            <svg class="w-6 h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            <span class="text-accent font-bold tracking-widest text-base sm:text-lg">PORTFOLLIO</span>
-            <span class="hidden xl:inline text-xs text-gray-400"> // ENGINEERING + PHOTOGRAPHY</span>
-        </div>
-
-        <!-- SEARCH FIELD COMPONENT -->
-        <div class="hidden lg:flex items-center relative my-2 lg:my-0">
-            <svg class="w-4 h-4 text-gray-400 absolute left-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="SEARCH ARCHIVE [ESP32, SPICE, OPTICS]..." class="bg-cardBlack border border-borderGray text-xs text-white pl-9 pr-4 py-2 w-64 focus:outline-none focus:border-accent font-mono placeholder-gray-500">
-        </div>
-
-        <div class="flex items-center space-x-3">
-            <div class="hidden lg:flex items-center space-x-3 text-xs text-gray-400 font-mono pr-4 border-r border-borderGray">
-                <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">[ GH ]</a>
-                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">[ LI ]</a>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="hover:text-accent transition-colors">[ IG ]</a>
-            </div>
-
-            <div class="hidden sm:flex space-x-2">
-                <button onclick="switchView('academics')" id="nav-academics" class="px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-accent text-black border border-accent transition-colors">
-                    01 // Academics
-                </button>
-                <button onclick="switchView('photography')" id="nav-photography" class="px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-cardBlack text-gray-300 border border-borderGray hover:border-accent transition-colors">
-                    02 // Photography
-                </button>
-            </div>
-
-            <div class="hidden xl:flex items-center space-x-2 text-[10px] font-mono border-l border-borderGray pl-4">
-                <span class="text-gray-500">SYSTEM_FPS:</span>
-                <span id="fps-counter" class="text-accent font-bold">60</span>
-                <span class="text-gray-500 ml-2">INTERACTION_COUNT:</span>
-                <span id="click-counter" class="text-accent font-bold">0</span>
-            </div>
-
-            <button onclick="toggleTheme()" class="px-3 py-2 text-xs font-mono font-bold uppercase border border-borderGray bg-cardBlack hover:border-accent text-accent transition-colors flex items-center space-x-1" title="Toggle Theme">
-                <span id="theme-icon">☀️</span>
-                <span id="theme-text" class="hidden md:inline">[ LIGHT ]</span>
-            </button>
-
-            <button onclick="toggleMobileMenu()" class="sm:hidden px-3 py-2 bg-cardBlack text-accent border border-borderGray hover:border-accent focus:outline-none">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                </svg>
-            </button>
-        </div>
-
-        <div id="mobile-menu" class="hidden w-full mt-4 pt-4 border-t border-borderGray flex flex-col space-y-3 sm:hidden">
-            <div class="flex space-x-2 w-full">
-                <button onclick="switchView('academics'); toggleMobileMenu();" class="flex-1 py-2 text-xs uppercase font-bold bg-accent text-black border border-accent">
-                    01 // Academics
-                </button>
-                <button onclick="switchView('photography'); toggleMobileMenu();" class="flex-1 py-2 text-xs uppercase font-bold bg-cardBlack text-gray-300 border border-borderGray">
-                    02 // Photography
-                </button>
-            </div>
-            <div class="relative w-full">
-                <input type="text" oninput="handleSearch(this.value)" placeholder="SEARCH ARCHIVE..." class="w-full bg-cardBlack border border-borderGray text-xs text-white px-3 py-2 focus:outline-none focus:border-accent font-mono">
-            </div>
-            <div class="flex justify-around text-xs font-mono text-gray-400 py-2 border-t border-borderGray">
-                <a href="https://github.com" target="_blank" class="hover:text-accent">[ GITHUB ]</a>
-                <a href="https://linkedin.com" target="_blank" class="hover:text-accent">[ LINKEDIN ]</a>
-                <a href="https://instagram.com" target="_blank" class="hover:text-accent">[ INSTAGRAM ]</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- MAIN CONTENT CONTAINER -->
-    <main class="flex-grow">
-
-        <!-- VIEW 01: ACADEMICS & ENGINEERING -->
-        <section id="view-academics" class="block">
-            <!-- Hero Section -->
-            <header id="hero-header" class="relative min-h-[90vh] flex items-center border-b border-borderGray overflow-hidden bg-black py-16">
-                <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-                    <img id="hero-bg-img" src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=2000&q=80" alt="Engineering and Optics Background" class="w-full h-full object-cover opacity-55 filter grayscale contrast-125">
-                    <div id="hero-overlay-dark" class="absolute inset-0 bg-black/60 transition-opacity duration-300"></div>
-                    <div id="hero-overlay-gradient" class="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-accent/20 via-accent/10 to-transparent transition-opacity duration-300"></div>
-                    <div class="absolute inset-0 bg-[linear-gradient(to_right,#222_1px,transparent_1px),linear-gradient(to_bottom,#222_1px,transparent_1px)] bg-[size:3rem_3rem] opacity-20"></div>
-                </div>
-
-                <div class="max-w-7xl mx-auto px-6 relative z-10 w-full flex flex-col gap-12">
-                    <div class="max-w-4xl space-y-6">
-                        <div class="inline-block px-3 py-1 bg-accent text-black text-xs font-bold uppercase tracking-widest">
-                            SYS_STATUS: ONLINE // DUAL TRAIT: ENGINEERING + OPTICS
-                        </div>
-                        <h1 class="text-4xl sm:text-6xl font-black tracking-tight leading-none">
-                            ENGINEERING SYSTEMS & <span class="text-accent">VISUAL OPTICS.</span>
-                        </h1>
-                        <p class="text-gray-300 text-sm sm:text-base max-w-2xl leading-relaxed">
-                            Electronics Engineering student bridging rigorous analog circuit design, microcontroller code, and deliberate architectural photography through a strict brutalist lens.
-                        </p>
-                        <div class="flex flex-wrap gap-4 pt-4">
-                            <a href="#projects" class="px-6 py-3 bg-accent text-black font-bold text-xs uppercase tracking-wider hover:bg-accentHover transition-colors border border-accent">
-                                View Projects
-                            </a>
-                            <button onclick="switchView('photography')" class="px-6 py-3 bg-cardBlack text-white font-bold text-xs uppercase tracking-wider border border-borderGray hover:border-accent transition-colors">
-                                Explore Photography Archive &rarr;
-                            </button>
-                        </div>
-                    </div>
-                    <div class="border border-borderGray p-6 bg-cardBlack/95 backdrop-blur space-y-4 max-w-4xl w-full">
-                        <div class="relative w-full aspect-[16/10] sm:aspect-[21/10] border border-borderGray overflow-hidden group">
-                            <img src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1400&q=80" alt="Featured Hero Lens" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-700">
-                            <div class="absolute top-3 left-3 px-2.5 py-1 bg-black/90 text-[10px] text-accent font-mono border border-borderGray">
-                                // FEATURED_OPTICAL_FRAME_01
-                            </div>
-                        </div>
-                        <div class="flex flex-col sm:flex-row justify-between gap-2 text-xs text-gray-300 font-mono pt-3 border-t border-borderGray">
-                            <div><span class="text-gray-500">OPTICAL SETUP:</span> 35MM MANUAL f/2 PRIME LENS</div>
-                            <div><span class="text-gray-500">CORE TELEMETRY:</span> ANALOG CIRCUITRY & C++</div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Projects Section -->
-            <section id="projects" class="py-20 px-6 max-w-7xl mx-auto">
-                <div class="mb-12 border-b border-borderGray pb-4 flex justify-between items-end">
-                    <div>
-                        <span class="text-accent text-xs uppercase tracking-widest">// MODULE_01</span>
-                        <h2 class="text-2xl sm:text-3xl font-black uppercase mt-1">Selected Engineering Works & Architecture</h2>
-                    </div>
-                    <span class="text-xs text-gray-500 hidden sm:inline">[ 6 COMPREHENSIVE REPOSITORIES ]</span>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 searchable-container">
-                    <!-- Project 1 -->
-                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
-                        <div class="space-y-4">
-                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
-                                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" alt="Analog Signal Processor PCB" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
-                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ HARDWARE_PCB ]</div>
-                            </div>
-                            <div class="flex justify-between items-start pt-2">
-                                <span class="text-xs font-bold text-accent">[ 01 ]</span>
-                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">Hardware / Spice</span>
-                            </div>
-                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">Analog Signal Processor & Active Filter Array</h3>
-                            <p class="text-xs text-gray-400 leading-relaxed">
-                                Designed, simulated, and fabricated multi-stage active operational amplifier filters optimized for ultra-low noise precision sensor telemetry. Performed exhaustive frequency response analysis using SPICE models, mitigating thermal noise interference and stabilizing cutoff thresholds across varying environmental loads.
-                            </p>
-                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
-                                <div>• Target Bandwidth: 0.1Hz - 50kHz</div>
-                                <div>• Component Tolerance: ±1% Precision</div>
-                                <div>• Validation: Oscilloscope & Bode Plots</div>
-                                <div>• Topology: Multiple Feedback Butterworth</div>
-                            </div>
-                        </div>
-                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
-                            <span class="text-gray-500">C++ / SPICE / Altium</span>
-                            <span class="text-accent">SOURCE_CODE &rarr;</span>
-                        </div>
-                    </article>
-
-                    <!-- Project 2 -->
-                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
-                        <div class="space-y-4">
-                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
-                                <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80" alt="KBC Interactive Engine Screen" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
-                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ REACT_ENGINE ]</div>
-                            </div>
-                            <div class="flex justify-between items-start pt-2">
-                                <span class="text-xs font-bold text-accent">[ 02 ]</span>
-                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">Interactive App</span>
-                            </div>
-                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">KBC Interactive Trivia Engine & Quiz System</h3>
-                            <p class="text-xs text-gray-400 leading-relaxed">
-                                Developed a fully responsive, high-performance web-based trivia application emulating complex broadcast quiz logic. Features real-time countdown timers, randomized question banks, interactive lifeline simulations, and persistent state management wrapped in a ruthless brutalist user interface.
-                            </p>
-                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
-                                <div>• Framework: React 18 / Hooks</div>
-                                <div>• Styling: Tailwind CSS Monolith</div>
-                                <div>• State Architecture: Reducer Pattern</div>
-                                <div>• Optimization: Zero-Lag Event Listeners</div>
-                            </div>
-                        </div>
-                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
-                            <span class="text-gray-500">React / Tailwind</span>
-                            <span class="text-accent">LIVE_DEMO &rarr;</span>
-                        </div>
-                    </article>
-
-                    <!-- Project 3 -->
-                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
-                        <div class="space-y-4">
-                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
-                                <img src="https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=800&q=80" alt="Embedded Microcontroller Circuit" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
-                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ EMBEDDED_NODE ]</div>
-                            </div>
-                            <div class="flex justify-between items-start pt-2">
-                                <span class="text-xs font-bold text-accent">[ 03 ]</span>
-                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">Embedded System</span>
-                            </div>
-                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">Microcontroller Telemetry & Wireless Node</h3>
-                            <p class="text-xs text-gray-400 leading-relaxed">
-                                Engineered low-power sensor node firmware written in bare-metal C for autonomous environmental monitoring. Implemented SPI/I2C communication protocols to interface atmospheric sensors with low-power radio transceivers, achieving extended battery longevity and dependable packet delivery.
-                            </p>
-                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
-                                <div>• Architecture: ARM Cortex-M0+</div>
-                                <div>• Protocols: SPI, I2C, UART, RF</div>
-                                <div>• Power Profile: Ultra-Low Sleep</div>
-                                <div>• Firmware: Bare-Metal C / RTOS</div>
-                            </div>
-                        </div>
-                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
-                            <span class="text-gray-500">Embedded C</span>
-                            <span class="text-accent">GITHUB &rarr;</span>
-                        </div>
-                    </article>
-                </div>
-            </section>
-
-            <!-- IoT & ESP Systems Section -->
-            <section id="iot-projects" class="py-20 px-6 max-w-7xl mx-auto border-t border-borderGray">
-                <div class="mb-12 border-b border-borderGray pb-4 flex justify-between items-end">
-                    <div>
-                        <span class="text-accent text-xs uppercase tracking-widest">// MODULE_01_B</span>
-                        <h2 class="text-2xl sm:text-3xl font-black uppercase mt-1">ESP8266 & ESP32 IoT Repositories</h2>
-                    </div>
-                    <span class="text-xs text-gray-500 hidden sm:inline">[ 3 EMBEDDED SYSTEMS ]</span>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16 searchable-container">
-                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
-                        <div class="space-y-4">
-                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
-                                <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80" alt="ESP8266 Node Controller" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
-                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ ESP8266_HUB ]</div>
-                            </div>
-                            <div class="flex justify-between items-start pt-2">
-                                <span class="text-xs font-bold text-accent">[ 04 ]</span>
-                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">IoT / ESP8266</span>
-                            </div>
-                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">ESP8266 Wi-Fi Automated Sensor Hub</h3>
-                            <p class="text-xs text-gray-400 leading-relaxed">
-                                Built an autonomous IoT monitoring node using the ESP8266 Wi-Fi SoC integrated with DHT22 temperature/humidity sensors and light dependent resistors. Programmed using custom C++ firmware with captive portal Wi-Fi configuration and secure MQTT client publishing to cloud broker platforms.
-                            </p>
-                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
-                                <div>• Microcontroller: ESP8266 (NodeMCU)</div>
-                                <div>• Protocols: MQTT over TLS, HTTP</div>
-                                <div>• Sensors: DHT22, LDR, Soil Moisture</div>
-                                <div>• Firmware: C++ / Arduino Framework</div>
-                            </div>
-                        </div>
-                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
-                            <span class="text-gray-500">ESP8266 / MQTT</span>
-                            <span class="text-accent">GITHUB &rarr;</span>
-                        </div>
-                    </article>
-
-                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
-                        <div class="space-y-4">
-                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
-                                <img src="https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&w=800&q=80" alt="ESP32 CAM Hardware Rig" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
-                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ ESP32_VISION ]</div>
-                            </div>
-                            <div class="flex justify-between items-start pt-2">
-                                <span class="text-xs font-bold text-accent">[ 05 ]</span>
-                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">ESP32 / Camera</span>
-                            </div>
-                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">ESP32-CAM Wireless Vision & Stream Node</h3>
-                            <p class="text-xs text-gray-400 leading-relaxed">
-                                Developed a low-cost, low-latency wireless surveillance and frame capture device powered by the dual-core ESP32-CAM module. Configured internal PSRAM frame buffers for high-resolution JPEG streaming over local Wi-Fi networks with embedded web server controls and motion detection frame differencing.
-                            </p>
-                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
-                                <div>• SoC: ESP32-S with OV2640 Camera</div>
-                                <div>• Streaming: MJPEG over HTTP</div>
-                                <div>• Memory: 4MB PSRAM Buffer</div>
-                                <div>• Processing: Frame Differencing Motion Detection</div>
-                            </div>
-                        </div>
-                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
-                            <span class="text-gray-500">ESP32-CAM / C++</span>
-                            <span class="text-accent">GITHUB &rarr;</span>
-                        </div>
-                    </article>
-
-                    <article class="searchable-item reveal-on-scroll reactive-card border border-borderGray bg-cardBlack p-6 flex flex-col justify-between group">
-                        <div class="space-y-4">
-                            <div class="w-full h-44 bg-black border border-borderGray overflow-hidden relative group-hover:border-accent transition-colors">
-                                <img src="https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80" alt="ESP32 Wireless Mesh Array" class="w-full h-full object-cover filter grayscale contrast-125 group-hover:scale-105 transition-transform duration-500">
-                                <div class="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] text-accent font-mono border border-borderGray">[ MESH_PROTOCOL ]</div>
-                            </div>
-                            <div class="flex justify-between items-start pt-2">
-                                <span class="text-xs font-bold text-accent">[ 06 ]</span>
-                                <span class="text-[10px] text-gray-500 uppercase tracking-widest">Mesh / Home Auto</span>
-                            </div>
-                            <h3 class="text-lg font-bold group-hover:text-accent transition-colors">ESP32 Decentralized Mesh Home Automation</h3>
-                            <p class="text-xs text-gray-400 leading-relaxed">
-                                Engineered a self-healing wireless mesh network of multiple ESP32 nodes communicating via ESP-NOW protocols to control relay switches, lighting arrays, and HVAC triggers across multi-room environments without requiring central router connectivity.
-                            </p>
-                            <div class="text-[11px] text-gray-500 font-mono space-y-1 pt-2 border-t border-borderGray/50">
-                                <div>• Protocol: painlessMesh / ESP-NOW</div>
-                                <div>• Actuators: Solid-State Relays, PWM Dimming</div>
-                                <div>• Deployment: Multi-Node Distributed Array</div>
-                                <div>• Update Pipeline: Secure OTA Flashing</div>
-                            </div>
-                        </div>
-                        <div class="border-t border-borderGray pt-4 flex justify-between items-center text-xs mt-6">
-                            <span class="text-gray-500">ESP32 / Mesh Protocol</span>
-                            <span class="text-accent">GITHUB &rarr;</span>
-                        </div>
-                    </article>
-                </div>
-            </section>
-
-            <!-- COMMENT STREAM COMPONENT -->
-            <section id="comments-section" class="py-20 px-6 max-w-7xl mx-auto border-t border-borderGray">
-                <div class="mb-8 border-b border-borderGray pb-4">
-                    <span class="text-accent text-xs uppercase tracking-widest">// PEER_REVIEWS</span>
-                    <h2 class="text-2xl sm:text-3xl font-black uppercase mt-1">Interactive Telemetry & Comments</h2>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <form onsubmit="postComment(event)" class="border border-borderGray bg-cardBlack p-6 space-y-4">
-                        <div class="text-xs text-accent font-bold">// ADD_PUBLIC_LOG</div>
-                        <input type="text" id="comment-author" required placeholder="IDENTIFIER [Name / Handle]..." class="w-full bg-black border border-borderGray p-3 text-xs text-white focus:outline-none focus:border-accent font-mono">
-                        <textarea id="comment-body" required rows="4" placeholder="TELEMETRY_LOG [Enter technical feedback or comments]..." class="w-full bg-black border border-borderGray p-3 text-xs text-white focus:outline-none focus:border-accent font-mono"></textarea>
-                        <button type="submit" class="px-6 py-3 bg-accent text-black font-bold text-xs uppercase tracking-wider hover:bg-accentHover">Submit Comment Log</button>
-                    </form>
-                    <div id="comments-feed" class="border border-borderGray bg-cardBlack p-6 space-y-4 max-h-96 overflow-y-auto font-mono text-xs">
-                        <div class="border-b border-borderGray pb-3">
-                            <div class="text-accent font-bold">[ SYSTEM_ADMIN // 2026-11-03 ]</div>
-                            <p class="text-gray-300 mt-1">Telemetry log operational. Terminal is open for public comments.</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </section>
-
-        <!-- VIEW 02: PHOTOGRAPHY -->
-        <section id="view-photography" class="hidden">
-            <header class="relative py-24 border-b border-borderGray bg-black px-6">
-                <div class="max-w-7xl mx-auto space-y-4">
-                    <span class="text-accent text-xs uppercase tracking-widest">// MODULE_02_OPTICS</span>
-                    <h1 class="text-4xl sm:text-6xl font-black tracking-tight uppercase">Visual Frame Archive &mdash; 22 Optical Studies</h1>
-                    <p class="text-gray-400 text-sm sm:text-base max-w-2xl leading-relaxed">
-                        A curated archive of brutalist architectural lines, severe geometric framing, nocturnal light studies, and high-contrast monochrome captures executed through manual mechanical lenses and strict zone system metering.
-                    </p>
-                    <div class="pt-2">
-                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-4 py-2 bg-cardBlack text-accent border border-borderGray hover:border-accent text-xs font-mono uppercase tracking-wider transition-colors">
-                            [ VIEW FULL INSTAGRAM FEED &rarr; ]
-                        </a>
-                    </div>
-                </div>
-            </header>
-
-            <!-- INTERACTIVE CAROUSEL COMPONENT -->
-            <section class="py-12 px-6 max-w-7xl mx-auto border-b border-borderGray">
-                <div class="mb-6 flex justify-between items-center">
-                    <span class="text-accent text-xs font-bold tracking-widest">// FEATURED_SLIDESHOW_CAROUSEL</span>
-                    <div class="flex space-x-2">
-                        <button onclick="prevSlide()" class="px-3 py-1 bg-cardBlack text-accent border border-borderGray hover:border-accent text-xs font-mono">&larr; PREV</button>
-                        <button onclick="nextSlide()" class="px-3 py-1 bg-cardBlack text-accent border border-borderGray hover:border-accent text-xs font-mono">NEXT &rarr;</button>
-                    </div>
-                </div>
-                <div class="relative w-full h-[50vh] sm:h-[60vh] bg-black border border-borderGray overflow-hidden">
-                    <img id="carousel-img" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1600&q=80" alt="Carousel Slide" class="w-full h-full object-cover filter grayscale contrast-125 transition-all duration-500">
-                    <div class="absolute bottom-4 left-4 right-4 sm:right-auto px-3 py-1.5 bg-black/90 text-accent font-mono text-xs border border-borderGray" id="carousel-caption">
-                        [ SLIDE 1 / 3 ] BRUTALIST CONCRETE STRUCTURE I
-                    </div>
-                </div>
-            </section>
-        </section>
-    </main>
-
-    <!-- FOOTER SECTION -->
-    <footer id="contact" class="border-t border-borderGray bg-black py-16 px-6 mt-auto relative z-10">
-        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div class="space-y-6">
-                <div>
-                    <span class="text-accent text-xs uppercase tracking-widest">// INITIATE_COMMUNICATION</span>
-                    <h2 class="text-3xl font-black uppercase mt-1">Let's Build Together</h2>
-                    <p class="text-xs text-gray-400 leading-relaxed mt-2">
-                        Available for engineering collaborations, hardware projects, or photography assignments. Reach out directly or connect via socials.
-                    </p>
-                </div>
-                <div class="flex flex-wrap gap-3">
-                    <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-cardBlack border border-borderGray hover:border-accent text-xs text-gray-300 hover:text-accent transition-colors font-mono">
-                        GITHUB // [ @username ]
-                    </a>
-                    <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-cardBlack border border-borderGray hover:border-accent text-xs text-gray-300 hover:text-accent transition-colors font-mono">
-                        LINKEDIN // [ /in/username ]
-                    </a>
-                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-cardBlack border border-borderGray hover:border-accent text-xs text-gray-300 hover:text-accent transition-colors font-mono">
-                        INSTAGRAM // [ @handle ]
-                    </a>
-                </div>
-            </div>
-            <div class="border border-borderGray bg-cardBlack p-6 space-y-4">
-                <div class="text-xs text-accent uppercase tracking-widest">// DIRECT_CONTACT</div>
-                <div class="flex flex-col sm:flex-row gap-4 items-center">
-                    <input type="text" readonly value="contact@engineering-portfolio.dev" class="w-full bg-black border border-borderGray px-4 py-3 text-xs text-gray-300 focus:outline-none font-mono">
-                    <button onclick="copyEmail()" class="w-full sm:w-auto px-6 py-3 bg-accent text-black text-xs font-bold uppercase tracking-wider hover:bg-accentHover whitespace-nowrap">
-                        Copy Email
-                    </button>
-                </div>
-                <div id="copy-msg" class="text-[10px] text-accent hidden font-mono">STATUS: EMAIL COPIED TO CLIPBOARD</div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- INTERACTIVE JAVASCRIPT SYSTEM ENGINE -->
-    <script>
-        const carouselSlides = [
-            { url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1600&q=80", title: "[ SLIDE 1 / 3 ] BRUTALIST CONCRETE STRUCTURE I" },
-            { url: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80", title: "[ SLIDE 2 / 3 ] NOCTURNE LIGHT LINES II" },
-            { url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80", title: "[ SLIDE 3 / 3 ] OPTICAL SCHEMATIC MACRO III" }
-        ];
-        let currentSlide = 0;
-        function updateCarousel() {
-            const img = document.getElementById('carousel-img');
-            const cap = document.getElementById('carousel-caption');
-            if (img && cap) {
-                img.src = carouselSlides[currentSlide].url;
-                cap.innerText = carouselSlides[currentSlide].title;
-            }
-        }
-        function nextSlide() {
-            currentSlide = (currentSlide + 1) % carouselSlides.length;
-            updateCarousel();
-        }
-        function prevSlide() {
-            currentSlide = (currentSlide - 1 + carouselSlides.length) % carouselSlides.length;
-            updateCarousel();
-        }
-
-        function switchView(viewName) {
-            const academics = document.getElementById('view-academics');
-            const photography = document.getElementById('view-photography');
-            const btnA = document.getElementById('nav-academics');
-            const btnP = document.getElementById('nav-photography');
-
-            if (viewName === 'academics') {
-                academics.classList.remove('hidden');
-                photography.classList.add('hidden');
-                btnA.className = "px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-accent text-black border border-accent";
-                btnP.className = "px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-cardBlack text-gray-300 border border-borderGray";
-            } else {
-                academics.classList.add('hidden');
-                photography.classList.remove('hidden');
-                btnP.className = "px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-accent text-black border border-accent";
-                btnA.className = "px-3 sm:px-4 py-2 text-xs uppercase font-bold tracking-wider bg-cardBlack text-gray-300 border border-borderGray";
-            }
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function toggleTheme() {
-            const root = document.getElementById('html-root');
-            const isDark = root.classList.contains('dark');
-            const icon = document.getElementById('theme-icon');
-            const text = document.getElementById('theme-text');
-
-            if (isDark) {
-                root.classList.remove('dark');
-                root.classList.add('light');
-                icon.innerText = '🌙';
-                text.innerText = '[ DARK ]';
-            } else {
-                root.classList.remove('light');
-                root.classList.add('dark');
-                icon.innerText = '☀️';
-                text.innerText = '[ LIGHT ]';
-            }
-        }
-
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
-        }
-
-        // Interactive Canvas Particle Grid Script
-        (function initCanvasGrid() {
-            const canvas = document.getElementById('interactive-grid-canvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            let width, height;
-            let mouseX = -1000, mouseY = -1000;
-
-            function resize() {
-                width = canvas.width = window.innerWidth;
-                height = canvas.height = window.innerHeight;
-            }
-            window.addEventListener('resize', resize);
-            resize();
-
-            window.addEventListener('mousemove', (e) => {
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-            });
-
-            function draw() {
-                ctx.clearRect(0, 0, width, height);
-                const gap = 40;
-                ctx.fillStyle = '#FF9800';
-
-                for (let x = 0; x < width; x += gap) {
-                    for (let y = 0; y < height; y += gap) {
-                        const dist = Math.hypot(x - mouseX, y - mouseY);
-                        const radius = dist < 120 ? Math.max(1, 4 - dist / 30) : 1;
-                        ctx.beginPath();
-                        ctx.arc(x, y, radius, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                }
-                requestAnimationFrame(draw);
-            }
-            draw();
-        })();
-
-        function copyEmail() {
-            const email = "contact@engineering-portfolio.dev";
-            const msg = document.getElementById('copy-msg');
-            const textArea = document.createElement("textarea");
-            textArea.value = email;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                msg.classList.remove('hidden');
-                setTimeout(() => msg.classList.add('hidden'), 3000);
-            } catch (err) {
-                console.error('Copy failed', err);
-            }
-            document.body.removeChild(textArea);
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('revealed');
-                    }
-                });
-            }, { threshold: 0.1 });
-
-            document.querySelectorAll('.reveal-on-scroll').forEach(el => observer.observe(el));
-        });
-    </script>
+  window.addEventListener('resize', function () {
+    try {
+      const doc = frame.contentDocument;
+      frame.style.height = Math.max(1, Math.ceil(
+        Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight)
+      )) + 'px';
+    } catch (_) {}
+  });
+})();
+</script>
 </body>
-</html>`);
-});
-
-// Start listening on port
-app.listen(PORT, () => {
-    console.log(`[SYS_ONLINE] Node Server Running: http://localhost:${PORT}`);
-});
+</html>
